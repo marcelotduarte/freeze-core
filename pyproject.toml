@@ -66,11 +66,10 @@ tests = [
 
 [project.urls]
 Home = "https://marcelotduarte.github.io/cx_Freeze"
-Changelog = "https://cx-freeze.readthedocs.io/en/stable/releasenotes.html"
+Changelog = "https://github.com/marcelotduarte/freeze-core/CHANGELOG.md"
 Documentation = "https://cx-freeze.readthedocs.io"
-Source = "https://github.com/marcelotduarte/freeze_core"
+Source = "https://github.com/marcelotduarte/freeze-core"
 Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
-Workflows = "https://github.com/marcelotduarte/freeze_core/actions?query=branch:main"
 
 [tool.setuptools]
 include-package-data = true
