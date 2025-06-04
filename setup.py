@@ -43,11 +43,12 @@ class BuildBases(setuptools.command.build_ext.build_ext):
     """Build C bases and extension."""
 
     def build_extension(self, ext) -> None:
-        if "bases" not in ext.name:
+        if not ext.name.split(".")[1].startswith(("bases", "legacy")):
             super().build_extension(ext)
             return
         if IS_MINGW or IS_WINDOWS:
             ext.sources.append("src/freeze_core/bases/manifest.rc")
+            ext.include_dirs.append("src/freeze_core/include")
         objects = self.compiler.compile(
             ext.sources,
             output_dir=self.build_temp,
@@ -320,7 +321,7 @@ def get_extensions() -> list[Extension]:
             ),
             Extension(
                 "freeze_core.util",
-                ["src/util.c"],
+                ["src/freeze_core/util.c"],
                 libraries=["imagehlp", "shlwapi"],
             ),
         ]
