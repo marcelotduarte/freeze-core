@@ -2,11 +2,15 @@
 
 # Get script directory (without using /usr/bin/realpath)
 CI_DIR=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
-# Install/update uv
-$CI_DIR/install-tools.sh
 
 # Python information (platform and version)
+INSTALL_TOOLS="1"
 if ! [ -z "$UV_PYTHON" ]; then
+    if ! which uv &>/dev/null; then
+        # Install/update uv
+        $CI_DIR/install-tools.sh
+        INSTALL_TOOLS="0"
+    fi
     PYTHON=$(uv python find $UV_PYTHON)
 elif which python &>/dev/null; then
     PYTHON=python
@@ -19,19 +23,27 @@ PY_VERSION_FULL=$($PYTHON -c "import sysconfig; print(sysconfig.get_config_var('
 PY_VERSION_NODOT=$($PYTHON -c "import sysconfig; print(sysconfig.get_config_var('py_version_nodot'), end='')")
 PY_ABI_THREAD=$($PYTHON -c "import sysconfig; print(sysconfig.get_config_var('abi_thread') or '', end='')")
 
+IS_CONDA=$(! [ -z "$CONDA_EXE" ] && echo "1")
+IS_MINGW=$([[ $PY_PLATFORM == mingw* ]] && echo "1")
+
 PYTHON_TAG=cp$PY_VERSION_NODOT
-if [[ $PY_PLATFORM == linux* ]]; then
-    PLATFORM_TAG=many$(echo $PY_PLATFORM | sed 's/\-/_/')
-    PLATFORM_TAG_MASK="$(echo $PLATFORM_TAG | sed 's/_/*_/')"
-    if ! [ "$CI" == "true" ] && which podman >/dev/null; then
-        export CIBW_CONTAINER_ENGINE=podman
-    fi
-elif [[ $PY_PLATFORM == macosx* ]]; then
-    PLATFORM_TAG=macosx_universal2
-    PLATFORM_TAG_MASK="macosx_*"
-else
+if [ "$IS_CONDA" == "1" ]; then
     PLATFORM_TAG=$(echo $PY_PLATFORM | sed 's/\-/_/')
-    PLATFORM_TAG_MASK="win*"
+    PLATFORM_TAG_MASK=$PLATFORM_TAG
+else
+    if [[ $PY_PLATFORM == linux* ]]; then
+        PLATFORM_TAG=many$(echo $PY_PLATFORM | sed 's/\-/_/')
+        PLATFORM_TAG_MASK="$(echo $PLATFORM_TAG | sed 's/_/*_/')"
+        if ! [ "$CI" == "true" ] && which podman >/dev/null; then
+            export CIBW_CONTAINER_ENGINE=podman
+        fi
+    elif [[ $PY_PLATFORM == macosx* ]]; then
+        PLATFORM_TAG=macosx_universal2
+        PLATFORM_TAG_MASK="macosx_*"
+    else
+        PLATFORM_TAG=$(echo $PY_PLATFORM | sed 's/\-/_/')
+        PLATFORM_TAG_MASK="win*"
+    fi
 fi
 BUILD_TAG_DEFAULT="$PYTHON_TAG-$PLATFORM_TAG$PY_ABI_THREAD"
 
@@ -42,27 +54,32 @@ if ! [ -z "$1" ] && [ "$1" == "--help" ]; then
     echo "Where:"
     echo "  --all     Build all valid wheels for current OS."
     echo "  TAG       Force build the wheel for the given identifier."
-    echo "            [default: $BUILD_TAG_DEFAULT]"
+    echo "            [default: ${BUILD_TAG_DEFAULT}]"
     echo "  --install Install after build [default on local builds]."
     exit 1
 fi
 
 BUILD_TAG="$BUILD_TAG_DEFAULT"
 if [ "$CI" == "true" ]; then
-    INSTALL=""
+    INSTALL="0"
 else
-    INSTALL=true
+    INSTALL="1"
 fi
 while ! [ -z "$1" ]; do
     if [ "$1" == "--all" ]; then
         BUILD_TAG=""
     elif [ "$1" == "--install" ]; then
-        INSTALL=true
+        INSTALL="1"
     else
         BUILD_TAG="$1"
     fi
     shift
 done
+
+# Install/update uv
+if [ "$INSTALL_TOOLS" == "1" ]; then
+    $CI_DIR/install-tools.sh
+fi
 
 # Use of dev tools
 _bump_my_version () {
@@ -74,7 +91,7 @@ _bump_my_version () {
 _build_wheel () {
     local args=$*
 
-    if [[ $PY_PLATFORM == mingw* ]]; then
+    if [ "$IS_CONDA" == "1" ] || [ "$IS_MINGW" == "1" ]; then
         $PYTHON -m build -n -x --wheel -o wheelhouse
     elif [[ $PY_PLATFORM == win* ]] && [[ $args == *--only* ]]; then
         uv build -p $PY_VERSION$PY_ABI_THREAD --wheel -o wheelhouse
@@ -125,7 +142,7 @@ else
 fi
 echo "::endgroup::"
 
-if [ "$INSTALL" == "true" ]; then
+if [ "$INSTALL" == "1" ]; then
     echo "::group::Install $PROJECT_NAME $PROJECT_VERSION"
     if [[ $PY_PLATFORM == mingw* ]]; then
         pip install "$PROJECT_NAME==$PROJECT_VERSION" -f wheelhouse \

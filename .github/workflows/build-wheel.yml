@@ -37,13 +37,13 @@ jobs:
               },
               {
                   "os": "macos",
-                  "os-version": "13",
+                  "os-version": "13",  # macos-13 is x86_64
                   "arch": "universal2",
                   "tag": "cp3{9,10,11}-macosx_universal2",
               },
               {
                   "os": "macos",
-                  "os-version": "14",
+                  "os-version": "14",  # macos-14 is arm64
                   "arch": "universal2",
                   "tag": "cp3{12,13}*-macosx_universal2",
               },
@@ -99,7 +99,6 @@ jobs:
     needs: matrix
     strategy:
       fail-fast: false
-      # macos-14 is arm64 (apple silicon), macos-13 is x86_64
       matrix: ${{ fromJSON(needs.matrix.outputs.data) }}
     name: Build [${{ matrix.os }}-${{ matrix.os-version }}-${{ matrix.arch }}](job-${{ strategy.job-index }})
     runs-on: ${{ matrix.os }}-${{ matrix.os-version }}
