@@ -104,23 +104,29 @@ _build_wheel () {
 }
 
 echo "::group::Project version"
+NAME=$(grep "^name = " pyproject.toml | awk -F\" '{print $2}')
+NORMALIZED_NAME=${NAME,,}
 VERSION=$(_bump_my_version show current_version)
 if [ -z $VERSION ]; then
-    VERSION=$(grep "__version__ = " src/__init__.py | sed 's/-/./' | awk -F\" '{print $2}')
+    if [ -d src ]; then
+        FILENAME=src/$NAME/__init__.py
+    else
+        FILENAME=$NAME/__init__.py
+    fi
+    VERSION=$(grep "__version__ = " $FILENAME | sed 's/-/./' | awk -F\" '{print $2}')
 fi
 if [[ $VERSION == *-* ]]; then
-    PROJECT_VERSION=$($PYTHON -c "print(''.join('$VERSION'.replace('-','.').rsplit('.',1)), end='')")
+    NORMALIZED_VERSION=$($PYTHON -c "print(''.join('$VERSION'.replace('-','.').rsplit('.',1)), end='')")
 else
-    PROJECT_VERSION=$VERSION
+    NORMALIZED_VERSION=$VERSION
 fi
-PROJECT_NAME=$(grep "^name = " pyproject.toml | awk -F\" '{print $2}')
-echo "Name: $PROJECT_NAME"
-echo "Version: $VERSION ($PROJECT_VERSION)"
+echo "Name: $NAME ($NORMALIZED_NAME)"
+echo "Version: $VERSION ($NORMALIZED_VERSION)"
 echo "::endgroup::"
 
 mkdir -p wheelhouse >/dev/null
 if [[ $PY_PLATFORM == linux* ]]; then
-    FILEMASK="$PROJECT_NAME-$PROJECT_VERSION.tar.gz"
+    FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION.tar.gz"
     if [ -z $(ls "wheelhouse/$FILEMASK" 2>/dev/null || echo '') ]; then
         echo "::group::Build sdist"
         uv build -p $PY_VERSION$PY_ABI_THREAD --sdist -o wheelhouse
@@ -130,7 +136,7 @@ fi
 echo "::group::Build wheel(s)"
 if [ "$BUILD_TAG" == "$BUILD_TAG_DEFAULT" ]; then
     DIRTY=$(_bump_my_version show scm_info.dirty)
-    FILEMASK="$PROJECT_NAME-$PROJECT_VERSION-$PYTHON_TAG-$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG_MASK"
+    FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION-$PYTHON_TAG-$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG_MASK"
     FILEEXISTS=$(ls wheelhouse/$FILEMASK.whl 2>/dev/null || echo '')
     if [ "$DIRTY" == "True" ] || [ -z "$FILEEXISTS" ]; then
         _build_wheel --only "$BUILD_TAG_DEFAULT"
@@ -143,12 +149,12 @@ fi
 echo "::endgroup::"
 
 if [ "$INSTALL" == "1" ]; then
-    echo "::group::Install $PROJECT_NAME $PROJECT_VERSION"
+    echo "::group::Install $NORMALIZED_NAME $NORMALIZED_VERSION"
     if [[ $PY_PLATFORM == mingw* ]]; then
-        pip install "$PROJECT_NAME==$PROJECT_VERSION" -f wheelhouse \
+        pip install "$NORMALIZED_NAME==$NORMALIZED_VERSION" -f wheelhouse \
             --no-deps --no-index --force-reinstall
     else
-        uv pip install "$PROJECT_NAME==$PROJECT_VERSION" -f wheelhouse \
+        uv pip install "$NORMALIZED_NAME==$NORMALIZED_VERSION" -f wheelhouse \
             --no-build --no-deps --no-index --prerelease=allow --reinstall
     fi
     echo "::endgroup::"

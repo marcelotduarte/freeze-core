@@ -65,7 +65,11 @@ if [ "$IS_CONDA" == "true" ]; then
         fi
     fi
 
-    conda install --yes ${pkgs[@]}
+    # Install mamba and use it to speed up packages install
+    if ! which mamba &>/dev/null; then
+        conda install --quiet --yes mamba
+    fi
+    mamba install --quiet --yes ${pkgs[@]}
 elif [ "$IS_MINGW" == "true" ]; then
     # Packages to install
     pkgs=("$MINGW_PACKAGE_PREFIX-uv" "$MINGW_PACKAGE_PREFIX-python-build")
