@@ -47,6 +47,7 @@ tests:
 	mkdir -p $(COV_TMPDIR)
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
+	cp -a wheelhouse/ $(COV_TMPDIR)/
 	cd $(COV_TMPDIR) && pytest -nauto --no-cov || true
 
 .PHONY: cov
@@ -57,6 +58,7 @@ cov:
 	mkdir -p $(COV_TMPDIR)
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
+	cp -a wheelhouse/ $(COV_TMPDIR)/
 	cd $(COV_TMPDIR) && pytest -nauto --cov="cx_Freeze" || true
 	coverage combine -a $(COV_TMPDIR)/.coverage
 	coverage report
