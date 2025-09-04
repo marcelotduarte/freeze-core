@@ -1,0 +1,6 @@
+filelock>=3.12.3
+packaging>=24
+tomli>=2.0.1 ;python_version < '3.11'
+cabarchive>=0.2.4 ;sys_platform == 'win32'
+cx-logging>=3.1 ;sys_platform == 'win32' and platform_machine != 'ARM64'
+striprtf>=0.0.26 ;sys_platform == 'win32'

@@ -1,0 +1,263 @@
+[build-system]
+requires = [
+    # setuptools 77.0.3+ supports PEP 639
+    "setuptools>=77.0.3,<=80.9.0",
+    "cx-logging>=3.1 ;sys_platform == 'win32'",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "freeze_core"
+description = "Create standalone executables from Python scripts"
+authors = [
+    {name = "Marcelo Duarte", email = "marcelotduarte@users.noreply.github.com"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: C",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Software Distribution",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "filelock>=3.12.3",
+    "packaging>=24",
+    "tomli>=2.0.1 ;python_version < '3.11'",
+    # Windows
+    "cabarchive>=0.2.4 ;sys_platform == 'win32'",
+    "cx-logging>=3.1 ;sys_platform == 'win32' and platform_machine != 'ARM64'",
+    "striprtf>=0.0.26 ;sys_platform == 'win32'",
+]
+dynamic = ["version"]
+keywords = ["cx-freeze cxfreeze cx_Freeze freeze python"]
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = [
+    "bump-my-version==1.2.1",
+    "cibuildwheel==3.1.4",
+    "pre-commit==4.3.0",           # python_version >= 3.9
+]
+tests = [
+    "coverage==7.10.6",
+    "pytest==8.4.1",
+        "pluggy==1.6.0",
+    "pytest-mock==3.14.1",
+    "pytest-timeout==2.4.0",
+    "pytest-xdist==3.8.0",
+]
+
+[project.urls]
+Home = "https://marcelotduarte.github.io/cx_Freeze"
+Changelog = "https://github.com/marcelotduarte/freeze-core/CHANGELOG.md"
+Documentation = "https://cx-freeze.readthedocs.io"
+Source = "https://github.com/marcelotduarte/freeze-core"
+Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
+
+[tool.setuptools]
+include-package-data = true
+package-dir = {"" = "src"}
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = {attr = "freeze_core.__version__"}
+
+[tool.setuptools.packages.find]
+namespaces = false
+where = ["src"]
+
+[tool.bumpversion]
+commit = true
+current_version = "0.1.0-dev.0"
+message = "Bump version: {current_version} → {new_version} [ci skip]"
+parse = """(?x)
+    (?P<major>0|[1-9]\\d*)\\.
+    (?P<minor>0|[1-9]\\d*)\\.
+    (?P<patch>0|[1-9]\\d*)
+    (?:
+        \\.(?P<optional>0|[1-9]\\d*)  # pull request number (optional)
+    )?
+    (?:
+        -                             # dash separator for pre-release section
+        (?P<pre>[a-zA-Z-]+)\\.        # pre-release label
+        (?P<build>0|[1-9]\\d*)        # pre-release version number
+    )?                                # pre-release section is optional
+"""
+serialize = [
+	"{major}.{minor}.{patch}.{optional}-{pre}.{build}",
+	"{major}.{minor}.{patch}-{pre}.{build}",
+	"{major}.{minor}.{patch}"
+]
+sign_tags = true
+tag = true
+tag_name = "{new_version}"
+verbose = true
+
+[[tool.bumpversion.files]]
+filename = "src/freeze_core/__init__.py"
+
+[tool.bumpversion.parts.pre]
+values = ["dev", "final"]
+optional_value = "final"
+
+[tool.cibuildwheel]
+before-build = "uv pip install -r pyproject.toml"
+build-frontend = "build[uv]"
+build-verbosity = 1
+enable = ["cpython-freethreading"]
+skip = [
+    "cp3{9,10,13}-musllinux_*",
+    "cp3{9,10,13}-manylinux_ppc64le",
+    "cp313t-win*",
+]
+
+[tool.cibuildwheel.linux]
+archs = "x86_64 aarch64 ppc64le"
+before-build = """
+cd /opt/_internal && tar -xvf static-libs-for-embedding-only.tar.xz
+"""
+
+[tool.cibuildwheel.macos]
+archs = "universal2"
+repair-wheel-command = """
+delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {wheel}
+"""
+
+[tool.coverage.html]
+directory = "build/coverage_html_report"
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_also = [
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+
+    # Don't complain about abstract methods, they aren't run:
+    "@(abc\\.)?abstractmethod",
+
+    # TYPE_CHECKING block is never executed during pytest run
+    "if TYPE_CHECKING:",
+]
+ignore_errors = true
+omit = [
+    "*/src/freeze_core/initscripts/*",
+]
+precision = 2
+
+[tool.coverage.paths]
+source = [
+    "src/freeze_core/",
+    "*/src/freeze_core/",
+]
+
+[tool.coverage.run]
+command_line = "-m pytest -nauto"
+source = ["freeze_core"]
+parallel = true
+patch = ["subprocess"]
+relative_files = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-rpfEsXx"
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:distutils.*",
+    "ignore::DeprecationWarning:pkg_resources.*",
+    "ignore::DeprecationWarning:setuptools.*",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = [
+    "A",    # flake8-builtins
+    "ANN2", # flake8-annotations - missing return type
+    "ARG",  # flake8-unused-arguments
+    "B",    # flake8-bugbear
+    "BLE",  # flake8-blind-except
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle
+    "DTZ",  # flake8-datetimez
+    "E", "W",  # pycodestyle
+    "EXE",  # flake8-executable
+    "EM",   # flake8-errmsg
+    "ERA",  # eradicate
+    "F",    # flake8
+    "FA",   # flake8-future-annotations
+    "FLY",  # flynt
+    "G",    # flake8-logging-format
+    "I",    # isort
+    "ICN",  # flake8-import-conventions
+    "INT",  # flake8-gettext
+    "ISC003",  # flake8-implicit-str-concat - explicit-string-concatenation
+    "LOG",  # flake8-logging
+    "PERF", # Perflint
+    "PGH",  # pygrep-hooks
+    "PIE",  # flake8-pie
+    "PLC", "PLE", "PLR", "PLW",  # pylint
+    "PT",   # flake8-pytest-style
+    "PYI",  # flake8-pyi
+    "Q004", # flake8-quotes - unnecessary-escaped-quote
+    "RET",  # flake8-return
+    "RSE",  # flake8-raise
+    "RUF",  # Ruff-specific
+    "S",    # flake8-bandit
+    "SIM",  # flake8-simplify
+    "SLF",  # flake8-self
+    "SLOT", # flake8-slots
+    "T10",  # flake8-debugger
+    "TC",   # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "TRY",  # tryceratops
+    "UP",   # pyupgrade
+    "YTT",  # flake8-2020
+]
+ignore = [
+    # ignored for now, but should be revised in future
+    # last revised using ruff 0.12.0
+    "D102",     # Missing docstring in public method
+    "D205",     # 1 blank line required between summary line and description
+    "D401",     # First line of docstring should be in imperative mood
+    "PERF203",  # `try`-`except` within a loop incurs performance overhead
+    # ignore the following
+    "D105",     # Missing docstring in magic method
+    "D107",     # Missing docstring in `__init__`
+    "D203",     # conflict with D211
+    "D213",     # conflict with D212
+    "PLR2004",  # magic-value-comparison
+    "PLR0912",  # too-many-branches
+    "PLR0913",  # too-many-arguments
+    "PLR0915",  # too-many-statements
+    "PYI021",   # Docstrings should not be included in stubs
+    # avoid the rules that may cause conflict with formatter
+    "E501",
+    # prone to false positives (https://github.com/astral-sh/ruff/issues/4045)
+    "S603",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/freeze_core/initscripts/*" = ["S102"]
+"tests/*" = ["S101"]
+
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true

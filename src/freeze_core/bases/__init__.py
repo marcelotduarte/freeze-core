@@ -1,1 +1,1 @@
-# Directory for bases.
+"""Directory for bases."""

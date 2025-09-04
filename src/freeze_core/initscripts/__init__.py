@@ -1,1 +1,1 @@
-# Directory for initscripts.
+"""Directory for initscripts."""

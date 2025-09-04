@@ -12,8 +12,6 @@ HANDLE: TypeAlias = ...
 class BindError(Exception):
     """BindError Exception."""
 
-# ruff: noqa: ARG001
-
 def AddIcon(target_path: str | Path, exe_icon: str | Path) -> None:
     """Add the icon as a resource to the specified file."""
 

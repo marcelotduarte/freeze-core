@@ -1,1 +1,1 @@
-# Directory for legacy.
+"""Directory for legacy."""
