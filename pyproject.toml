@@ -83,7 +83,7 @@ where = ["src"]
 
 [tool.bumpversion]
 commit = true
-current_version = "0.1.0-dev.0"
+current_version = "0.1.0"
 message = "Bump version: {current_version} → {new_version} [ci skip]"
 parse = """(?x)
     (?P<major>0|[1-9]\\d*)\\.
@@ -121,9 +121,9 @@ build-frontend = "build[uv]"
 build-verbosity = 1
 enable = ["cpython-freethreading"]
 skip = [
-    "cp3{9,10,13}-musllinux_*",
-    "cp3{9,10,13}-manylinux_ppc64le",
-    "cp313t-win*",
+    "cp3{9,10,13,14}-musllinux_*",
+    "cp3{9,10,13,14}-manylinux_ppc64le",
+    "cp3{13,14}t-win*",
 ]
 
 [tool.cibuildwheel.linux]
