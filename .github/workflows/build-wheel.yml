@@ -1,0 +1,178 @@
+name: Build wheel
+
+on:
+  release:
+    types:
+      - created
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    name: Generate matrix of builds
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Extra includes
+        id: includes
+        run: |
+          import json, os
+          include = [
+              {
+                  "os": "ubuntu",
+                  "os-version": "latest",
+                  "arch": "x86_64",
+                  "tag": "cp3*-manylinux_x86_64",
+              },
+              {
+                  "os": "windows",
+                  "os-version": "latest",
+                  "arch": "x86_64",
+                  "tag": "cp3*-win_amd64",
+              },
+              {
+                  "os": "macos",
+                  "os-version": "13",  # macos-13 is x86_64
+                  "arch": "universal2",
+                  "tag": "cp3{9,10,11}-macosx_universal2",
+              },
+              {
+                  "os": "macos",
+                  "os-version": "14",  # macos-14 is arm64
+                  "arch": "universal2",
+                  "tag": "cp3{12,13}*-macosx_universal2",
+              },
+          ]
+          if "${{ github.event_name }}" != "pull_request":
+            include += [
+                {
+                    "os": "ubuntu",
+                    "os-version": "latest",
+                    "arch": "x86_64",
+                    "tag": "cp3{11,12,13}*-musllinux_x86_64",
+                },
+                {
+                    "os": "ubuntu",
+                    "os-version": "24.04-arm",
+                    "arch": "arm64",
+                    "tag": "cp3{11,12,13}*-manylinux_aarch64",
+                },
+                {
+                    "os": "ubuntu",
+                    "os-version": "24.04-arm",
+                    "arch": "arm64",
+                    "tag": "cp3{11,12,13}*-musllinux_aarch64",
+                },
+                {
+                    "os": "ubuntu",
+                    "os-version": "22.04",
+                    "arch": "ppc64le",
+                    "tag": "cp3{11,12,13}*-manylinux_ppc64le",
+                },
+                {
+                    "os": "windows",
+                    "os-version": "11-arm",
+                    "arch": "arm64",
+                    "tag": "cp3{11,12,13}-win_arm64",
+                },
+                {
+                    "os": "windows",
+                    "os-version": "latest",
+                    "arch": "x86_64",
+                    "tag": "cp3*-win32",
+                },
+            ]
+          with open(os.environ["GITHUB_OUTPUT"], "a+") as f:
+            print("data="+json.dumps({"include": include}), file=f)
+          print("data="+json.dumps({"include": include}))
+        shell: python
+
+    outputs:
+      data: ${{ steps.includes.outputs.data }}
+
+  build_wheel:
+    needs: matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.data) }}
+    name: Build [${{ matrix.os }}-${{ matrix.os-version }}-${{ matrix.arch }}](job-${{ strategy.job-index }})
+    runs-on: ${{ matrix.os }}-${{ matrix.os-version }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      UV_SYSTEM_PYTHON: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux' && matrix.arch != 'x86_64' && matrix.arch != 'arm64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.arch }}
+
+      - name: Bump new dev version
+        if: github.event_name != 'release'
+        run: |
+          git config user.name "Marcelo Duarte"
+          git config user.email marcelotduarte@users.noreply.github.com
+          SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+          VERSION=$(uvx bump-my-version show current_version 2>/dev/null)
+          VERSION_BASE=$(python -c "print('$VERSION'.rsplit('-',1)[0])")
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            OPTIONAL=".${{ github.event.number }}"
+          else
+            OPTIONAL=""
+          fi
+          VERSION_NEW=$VERSION_BASE$OPTIONAL-dev.$SOURCE_DATE_EPOCH
+          uvx bump-my-version bump --no-tag build --new-version=$VERSION_NEW 2>/dev/null
+          git log -1
+
+      - name: Build sdist and wheels
+        run: ./ci/build-wheel.sh "${{ matrix.tag }}"
+
+      - name: Upload the artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: freeze-core-wheel-${{ matrix.os }}-job-${{ strategy.job-index }}
+          path: wheelhouse
+          compression-level: 0 # no compression
+
+  publish:
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags')
+    name: Publish package to PyPI
+    needs: build_wheel
+    environment:
+      name: pypi
+      url: https://pypi.org/p/freeze-core
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: wheelhouse
+          pattern: freeze-core-wheel-*
+          merge-multiple: true
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheelhouse/
+          skip-existing: true
+          verbose: true
