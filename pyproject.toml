@@ -155,14 +155,14 @@ exclude_also = [
 ]
 ignore_errors = true
 omit = [
-    "*/src/freeze_core/initscripts/*",
+    "*/freeze_core/initscripts/*",
 ]
 precision = 2
 
 [tool.coverage.paths]
 source = [
-    "src/freeze_core/",
-    "*/src/freeze_core/",
+    "freeze_core/",
+    "*/freeze_core/",
 ]
 
 [tool.coverage.run]
@@ -241,6 +241,7 @@ ignore = [
     "D107",     # Missing docstring in `__init__`
     "D203",     # conflict with D211
     "D213",     # conflict with D212
+    "PLC0415",  # `import` should be at the top-level of a file
     "PLR2004",  # magic-value-comparison
     "PLR0912",  # too-many-branches
     "PLR0913",  # too-many-arguments
@@ -261,3 +262,7 @@ strict-checking = true
 
 [tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 50

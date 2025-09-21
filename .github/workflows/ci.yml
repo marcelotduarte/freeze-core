@@ -27,7 +27,7 @@ jobs:
       !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork)
     environment:
       name: ${{ github.event_name }}
-      url: https://test.pypi.org/p/cx-Freeze
+      url: https://test.pypi.org/p/freeze-core
     permissions:
       id-token: write
     runs-on: ubuntu-latest
@@ -98,7 +98,7 @@ jobs:
       - name: Install dependencies to test
         run: |
           uv pip install --extra tests --upgrade -r pyproject.toml
-          uv pip install cx_Freeze -f wheelhouse \
+          uv pip install freeze-core -f wheelhouse \
               --no-build --no-deps --no-index --prerelease=allow --reinstall
 
       - name: Generate coverage report
