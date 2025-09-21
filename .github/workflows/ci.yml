@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_wheel:
+    name: Build wheels
+    uses: ./.github/workflows/build.yml
+
+  testpypi:
+    name: Publish package to TestPyPI
+    needs:
+      - build_wheel
+    if: |
+      github.event_name != 'workflow_dispatch' &&
+      !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork)
+    environment:
+      name: ${{ github.event_name }}
+      url: https://test.pypi.org/p/cx-Freeze
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: wheelhouse
+          pattern: freeze-core-wheel-*
+          merge-multiple: true
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheelhouse/
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+          verbose: true
+
+  tests:
+    needs: build_wheel
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    strategy:
+      matrix:
+        os: [ubuntu, windows, macos]
+        os_version: [latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.13t"]
+        exclude:
+          - os: windows
+            os_version: latest
+            python-version: "3.13t" # provisional
+    defaults:
+      run:
+        shell: bash
+    env:
+      UV_NO_PROGRESS: true
+    steps:
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -qy alien fakeroot rpm
+
+      - name: Fetch only the required files for testing
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            pyproject.toml
+            tests
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          activate-environment: true
+          cache-dependency-glob: "pyproject.toml"
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download the wheel
+        uses: actions/download-artifact@v5
+        with:
+          merge-multiple: true
+          pattern: freeze-core-wheel-${{ matrix.os }}*
+          path: wheelhouse
+
+      - name: Install dependencies to test
+        run: |
+          uv pip install --extra tests --upgrade -r pyproject.toml
+          uv pip install cx_Freeze -f wheelhouse \
+              --no-build --no-deps --no-index --prerelease=allow --reinstall
+
+      - name: Generate coverage report
+        run: uv run --no-project coverage run
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: cov-${{ matrix.python-version }}.${{ matrix.os }}-${{ strategy.job-index }}
+          path: .coverage.*
+          include-hidden-files: true
+
+  coverage:
+    needs:
+      - tests
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v5
+        with:
+          pattern: cov-*
+          merge-multiple: true
+
+      - name: Coverage comment
+        id: coverage_comment
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_COVERAGE_FILES: true
+
+      - name: Store Pull Request comment to be posted
+        uses: actions/upload-artifact@v4
+        if: steps.coverage_comment.outputs.COMMENT_FILE_WRITTEN == 'true'
+        with:
+          name: python-coverage-comment-action
+          path: python-coverage-comment-action.txt
