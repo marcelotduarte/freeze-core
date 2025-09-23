@@ -106,8 +106,12 @@ jobs:
         shell: bash
     env:
       UV_SYSTEM_PYTHON: true
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          repository: marcelotduarte/freeze-core
 
       - name: Set up Python
         uses: actions/setup-python@v5
