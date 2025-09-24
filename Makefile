@@ -40,18 +40,20 @@ upgrade: uninstall clean install
 	pre-commit autoupdate
 	$(MAKE) pre-commit
 
-.PHONY: tests
-tests:
-	./ci/install-tools.sh --tests
+.PHONY: wheel
+wheel:
 	./ci/build-wheel.sh
+
+.PHONY: tests
+tests: wheel
+	./ci/install-tools.sh --tests
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
 	cd $(COV_TMPDIR) && pytest -nauto -v || true
 
 .PHONY: cov
-cov:
+cov: wheel
 	./ci/install-tools.sh --tests
-	./ci/build-wheel.sh
 	@rm -rf build/coverage_html_report
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
