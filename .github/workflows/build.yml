@@ -26,13 +26,13 @@ jobs:
                   "os": "ubuntu",
                   "os-version": "latest",
                   "arch": "x86_64",
-                  "tag": "cp3*-manylinux_x86_64",
+                  "tag": "cp3{9,10,11,12,13}*-manylinux_x86_64",
               },
               {
                   "os": "windows",
                   "os-version": "latest",
                   "arch": "x86_64",
-                  "tag": "cp3*-win_amd64",
+                  "tag": "cp3{9,10,11,12,13}*-win_amd64",
               },
               {
                   "os": "macos",
@@ -77,13 +77,13 @@ jobs:
                     "os": "windows",
                     "os-version": "11-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13}-win_arm64",
+                    "tag": "cp3{11,12,13}*-win_arm64",
                 },
                 {
                     "os": "windows",
                     "os-version": "latest",
                     "arch": "x86_64",
-                    "tag": "cp3*-win32",
+                    "tag": "cp3{9,10,11,12,13}*-win32",
                 },
             ]
           with open(os.environ["GITHUB_OUTPUT"], "a+") as f:
