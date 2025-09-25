@@ -67,7 +67,7 @@ def split_self_extract_exe(
 
 
 def unpack_cab(cabfile: Path, tmpdir: Path) -> None:
-    import cabarchive
+    import cabarchive  # noqa: PLC0415
 
     tmpdir.mkdir(exist_ok=True)
     cab = cabarchive.CabArchive(cabfile.read_bytes())
@@ -168,7 +168,7 @@ def fix_filename_and_copy(
 
 
 def unpack_exe(exe_filename: Path, unpack_dir: Path) -> Generator[Path]:
-    from striprtf.striprtf import rtf_to_text
+    from striprtf.striprtf import rtf_to_text  # noqa: PLC0415
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)

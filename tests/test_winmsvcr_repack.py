@@ -97,7 +97,7 @@ def test_repack_main(tmp_package) -> None:
 @pytest.mark.skipif(IS_MACOS, reason="Windows tests")
 @pytest.mark.skipif(IS_MINGW, reason="Disabled in MinGW")
 def test_repack_main_no_option(tmp_package) -> None:
-    """Test the freeze_core.winmsvcr_repack __main_ entry point without args."""
+    """Test the freeze_core.winmsvcr_repack 'main' entry point without args."""
     from freeze_core.winmsvcr_repack import main_test
 
     if not (IS_MINGW or IS_WINDOWS):
