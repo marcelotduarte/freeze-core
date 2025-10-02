@@ -151,8 +151,8 @@ _build_wheel () {
 }
 
 echo "::group::Project version"
-NAME=$(grep "^name = " pyproject.toml | awk -F\" '{print $2}')
-NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
+NAME=$(grep -m1 "^name = " pyproject.toml | awk -F\" '{print $2}')
+NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
 VERSION=$(_bump_my_version show current_version)
 if [ -z "$VERSION" ]; then
     if [ -d src ]; then
@@ -160,7 +160,17 @@ if [ -z "$VERSION" ]; then
     else
         FILENAME=$NAME/__init__.py
     fi
-    VERSION=$(grep "__version__ = " "${FILENAME/-/.}" | awk -F\" '{print $2}')
+    VERSION=$(grep "__version__ = " "$FILENAME" | awk -F\" '{print $2}')
+fi
+if [ -z "$VERSION" ]; then
+    NAME=$(echo "$NAME" | awk -F- '{print $2}')
+    NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
+    if [ -d src ]; then
+        FILENAME=src/$NAME/__init__.py
+    else
+        FILENAME=$NAME/__init__.py
+    fi
+    VERSION=$(grep "__version__ = " "$FILENAME" | awk -F\" '{print $2}')
 fi
 if [[ $VERSION == *-* ]]; then
     NORMALIZED_VERSION=$($PYTHON -c "print(''.join('$VERSION'.replace('-','.').rsplit('.',1)), end='')")

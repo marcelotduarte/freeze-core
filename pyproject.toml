@@ -118,9 +118,13 @@ build-frontend = "build[uv]"
 build-verbosity = 1
 enable = ["cpython-freethreading"]
 skip = [
-    "cp3{9,10,13,14}-musllinux_*",
-    "cp3{9,10,13,14}-manylinux_ppc64le",
-    "cp3{13,14}t-win*",
+    # Support for Python 3.11 to 3.13 on lesser-known Linux platforms
+    "cp3{9,10,14,14t}-musllinux_*",
+    "cp3{9,10,14,14t}-manylinux_ppc64le",
+    # Support Python 3.11 to 3.13 on Windows ARM64 (win_arm64).
+    "cp3{9,10,14,14t}-win_arm64",
+    "cp3{14,14t}-win_amd64",
+    "cp3{14,14t}-win32",
 ]
 
 [tool.cibuildwheel.linux]
