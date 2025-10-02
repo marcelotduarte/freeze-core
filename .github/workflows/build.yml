@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Extra includes
         id: includes
@@ -26,25 +26,25 @@ jobs:
                   "os": "ubuntu",
                   "os-version": "latest",
                   "arch": "x86_64",
-                  "tag": "cp3{9,10,11,12,13}*-manylinux_x86_64",
+                  "tag": "cp3{9,10,11,12,13,13t}-manylinux_x86_64",
               },
               {
                   "os": "windows",
                   "os-version": "latest",
                   "arch": "x86_64",
-                  "tag": "cp3{9,10,11,12,13}*-win_amd64",
+                  "tag": "cp3{9,10,11,12,13,13t}-win_amd64",
               },
               {
                   "os": "macos",
-                  "os-version": "13",  # macos-13 is x86_64
+                  "os-version": "15-intel",
                   "arch": "universal2",
                   "tag": "cp3{9,10,11}-macosx_universal2",
               },
               {
                   "os": "macos",
-                  "os-version": "14",  # macos-14 is arm64
+                  "os-version": "15",
                   "arch": "universal2",
-                  "tag": "cp3{12,13}*-macosx_universal2",
+                  "tag": "cp3{12,13,13t}-macosx_universal2",
               },
           ]
           if "${{ github.event_name }}" != "pull_request":
@@ -53,37 +53,37 @@ jobs:
                     "os": "ubuntu",
                     "os-version": "latest",
                     "arch": "x86_64",
-                    "tag": "cp3{11,12,13}*-musllinux_x86_64",
+                    "tag": "cp3{11,12,13,13t}-musllinux_x86_64",
                 },
                 {
                     "os": "ubuntu",
                     "os-version": "24.04-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13}*-manylinux_aarch64",
+                    "tag": "cp3{11,12,13,13t}-manylinux_aarch64",
                 },
                 {
                     "os": "ubuntu",
                     "os-version": "24.04-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13}*-musllinux_aarch64",
+                    "tag": "cp3{11,12,13,13t}-musllinux_aarch64",
                 },
                 {
                     "os": "ubuntu",
                     "os-version": "22.04",
                     "arch": "ppc64le",
-                    "tag": "cp3{11,12,13}*-manylinux_ppc64le",
+                    "tag": "cp3{11,12,13,13t}-manylinux_ppc64le",
                 },
                 {
                     "os": "windows",
                     "os-version": "11-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13}*-win_arm64",
+                    "tag": "cp3{11,12,13,13t}-win_arm64",
                 },
                 {
                     "os": "windows",
                     "os-version": "latest",
                     "arch": "x86_64",
-                    "tag": "cp3{9,10,11,12,13}*-win32",
+                    "tag": "cp3{9,10,11,12,13,13t}-win32",
                 },
             ]
           with open(os.environ["GITHUB_OUTPUT"], "a+") as f:
@@ -116,7 +116,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - uses: astral-sh/setup-uv@v6
         with:
