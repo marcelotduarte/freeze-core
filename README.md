@@ -15,25 +15,36 @@ Core dependency for cx_Freeze.
 Choose the Python package manager according to your system. See how the
 installation works with the most common ones, which are pip and conda.
 
-To install the latest version of `freeze-core` using `pip` into a
-virtual environment:
+To install the latest version of `freeze-core` into a virtual environment:
+
+```
+uv pip install --upgrade freeze-core
+```
+
+If using pip:
 
 ```
 pip install --upgrade freeze-core
 ```
 
+From the conda-forge channel:
+
+```
+conda install conda-forge::freeze-core
+```
+
 To install the latest development build:
+
+```
+uv pip uninstall freeze-core
+uv pip install --extra-index-url https://test.pypi.org/simple/ freeze-core --prerelease=allow --index-strategy=unsafe-best-match
+```
+
+If using pip:
 
 ```
 pip uninstall freeze-core
 pip install --extra-index-url https://test.pypi.org/simple/ freeze-core --pre --no-cache
-```
-
-Installing freeze-core from the conda-forge channel can be achieved with the
-command:
-
-```
-conda install conda-forge::freeze-core
 ```
 
 ## Development
