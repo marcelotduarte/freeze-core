@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "freeze-core"
-description = "Create standalone executables from Python scripts"
+description = "Core dependency for cx_Freeze"
 authors = [
     {name = "Marcelo Duarte", email = "marcelotduarte@users.noreply.github.com"}
 ]
@@ -77,7 +77,7 @@ where = ["src"]
 
 [tool.bumpversion]
 commit = true
-current_version = "0.2.0"
+current_version = "0.2.1"
 message = "Bump version: {current_version} → {new_version} [ci skip]"
 parse = """(?x)
     (?P<major>0|[1-9]\\d*)\\.
