@@ -1,7 +1,8 @@
 [build-system]
 requires = [
     # setuptools 77.0.3+ supports PEP 639
-    "setuptools>=77.0.3,<=80.9.0",
+    # setuptools 78.1.1 fix path traversal vulnerability
+    "setuptools>=78.1.1,<=80.9.0",
     "cx-logging>=3.1 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
