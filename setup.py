@@ -1,11 +1,9 @@
 """Setuptools script for freeze_core.
 
 Use the following commands to install in the development mode:
-    pip install -r requirements.txt -r requirements-dev.txt
-    pip install -e. --no-build-isolation --no-deps
-
-Documentation:
-    https://cx-freeze.readthedocs.io/en/stable/development/index.html
+    ci/install-tools.sh --dev
+    make install
+    uv pip install -e. --no-build-isolation --no-deps
 """
 
 from __future__ import annotations
