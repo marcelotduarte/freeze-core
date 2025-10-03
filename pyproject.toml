@@ -7,7 +7,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "freeze_core"
+name = "freeze-core"
 description = "Create standalone executables from Python scripts"
 authors = [
     {name = "Marcelo Duarte", email = "marcelotduarte@users.noreply.github.com"}
@@ -53,15 +53,11 @@ dev = [
 tests = [
     "coverage==7.10.7",
     "pytest==8.4.2",
-        "pluggy==1.6.0",
-    "pytest-mock==3.15.1",
-    "pytest-timeout==2.4.0",
-    "pytest-xdist==3.8.0",
 ]
 
 [project.urls]
 Home = "https://marcelotduarte.github.io/cx_Freeze"
-Changelog = "https://github.com/marcelotduarte/freeze-core/CHANGELOG.md"
+#Changelog = "https://github.com/marcelotduarte/freeze-core/CHANGELOG.md"
 Documentation = "https://cx-freeze.readthedocs.io"
 Source = "https://github.com/marcelotduarte/freeze-core"
 Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
@@ -162,15 +158,17 @@ precision = 2
 
 [tool.coverage.paths]
 source = [
-    "freeze_core/",
+    "src/freeze_core/",
     "*/freeze_core/",
 ]
 
 [tool.coverage.run]
-command_line = "-m pytest -nauto"
+command_line = "-m pytest"
+#debug = ["pathmap"]
+dynamic_context = "test_function"
 source = ["freeze_core"]
 parallel = true
-patch = ["subprocess"]
+#patch = ["subprocess"]
 relative_files = true
 
 [tool.pytest.ini_options]
