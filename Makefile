@@ -60,7 +60,7 @@ cov: wheel
 	cd $(COV_TMPDIR) && coverage run || true
 	coverage combine --keep --quiet -a $(COV_TMPDIR)/
 	coverage report
-	coverage html
+	coverage html --show-contexts
 
 .PHONY: release
 release:

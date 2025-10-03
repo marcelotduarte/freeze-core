@@ -72,7 +72,7 @@ def test_invalid(
 @pytest.mark.skipif(IS_MACOS, reason="Windows tests")
 @pytest.mark.skipif(IS_MINGW, reason="Disabled in MinGW")
 def test_repack_main(tmp_package) -> None:
-    """Test the cx_Freeze.winmsvcr_repack __main_ entry point with args."""
+    """Test the freeze_core.winmsvcr_repack __main_ entry point with args."""
     from freeze_core.winmsvcr_repack import main_test
 
     if not (IS_MINGW or IS_WINDOWS):
