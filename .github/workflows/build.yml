@@ -1,4 +1,4 @@
-name: Build wheel
+name: Build wheels
 
 on:
   release:
@@ -20,19 +20,22 @@ jobs:
       - name: Extra includes
         id: includes
         run: |
+          # Support Python 3.9 to 3.14 on major platforms
+          # Support Python 3.11 to 3.14 on lesser-known Linux platforms
+          # Support Python 3.11 to 3.14 on Windows ARM64 (win_arm64).
           import json, os
           include = [
               {
                   "os": "ubuntu",
                   "os-version": "latest",
                   "arch": "x86_64",
-                  "tag": "cp3{9,10,11,12,13,13t}-manylinux_x86_64",
+                  "tag": "cp3{9,10,11,12,13,13t,14,14t}-manylinux_x86_64",
               },
               {
                   "os": "windows",
                   "os-version": "latest",
                   "arch": "x86_64",
-                  "tag": "cp3{9,10,11,12,13,13t}-win_amd64",
+                  "tag": "cp3{9,10,11,12,13,13t,14,14t}-win_amd64",
               },
               {
                   "os": "macos",
@@ -44,7 +47,7 @@ jobs:
                   "os": "macos",
                   "os-version": "15",
                   "arch": "universal2",
-                  "tag": "cp3{12,13,13t}-macosx_universal2",
+                  "tag": "cp3{12,13,13t,14,14t}-macosx_universal2",
               },
           ]
           if "${{ github.event_name }}" != "pull_request":
@@ -53,37 +56,37 @@ jobs:
                     "os": "ubuntu",
                     "os-version": "latest",
                     "arch": "x86_64",
-                    "tag": "cp3{11,12,13,13t}-musllinux_x86_64",
+                    "tag": "cp3{11,12,13,13t,14,14t}-musllinux_x86_64",
                 },
                 {
                     "os": "ubuntu",
                     "os-version": "24.04-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13,13t}-manylinux_aarch64",
+                    "tag": "cp3{11,12,13,13t,14,14t}-manylinux_aarch64",
                 },
                 {
                     "os": "ubuntu",
                     "os-version": "24.04-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13,13t}-musllinux_aarch64",
+                    "tag": "cp3{11,12,13,13t,14,14t}-musllinux_aarch64",
                 },
                 {
                     "os": "ubuntu",
                     "os-version": "22.04",
                     "arch": "ppc64le",
-                    "tag": "cp3{11,12,13,13t}-manylinux_ppc64le",
+                    "tag": "cp3{11,12,13,13t,14,14t}-manylinux_ppc64le",
                 },
                 {
                     "os": "windows",
                     "os-version": "11-arm",
                     "arch": "arm64",
-                    "tag": "cp3{11,12,13,13t}-win_arm64",
+                    "tag": "cp3{11,12,13,13t,14,14t}-win_arm64",
                 },
                 {
                     "os": "windows",
                     "os-version": "latest",
                     "arch": "x86_64",
-                    "tag": "cp3{9,10,11,12,13,13t}-win32",
+                    "tag": "cp3{9,10,11,12,13,13t,14,14t}-win32",
                 },
             ]
           with open(os.environ["GITHUB_OUTPUT"], "a+") as f:
