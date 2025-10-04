@@ -263,7 +263,6 @@ class BuildBases(setuptools.command.build_ext.build_ext):
 
 def get_extensions() -> list[Extension]:
     """Build base executables and util module extension."""
-    abi_thread = get_config_var("abi_thread") or ""
     version = sys.version_info[:2]
     extensions = [
         Extension(
@@ -283,7 +282,7 @@ def get_extensions() -> list[Extension]:
             )
         ]
     if IS_MINGW or IS_WINDOWS:
-        if version <= (3, 13) and abi_thread == "":
+        if version < (3, 13):
             extensions += [
                 Extension(
                     "freeze_core.legacy.Win32GUI",
