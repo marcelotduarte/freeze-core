@@ -4,13 +4,12 @@
 //-----------------------------------------------------------------------------
 
 #define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#include "pythoncapi_compat.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <cx_Logging.h>
 #include <windows.h>
 #include <winsvc.h>
-
-#include "pythoncapi_compat.h"
 
 // define constants
 #define CX_LOGGING_SECTION_NAME      L"Logging"

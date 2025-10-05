@@ -4,11 +4,10 @@
 //-----------------------------------------------------------------------------
 
 #define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#include "pythoncapi_compat.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-#include "pythoncapi_compat.h"
 
 //-----------------------------------------------------------------------------
 // FatalError()
