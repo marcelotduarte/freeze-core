@@ -9,9 +9,10 @@ else
     PY_PLATFORM=""
 fi
 
-IS_CONDA=$([ -n "$CONDA_EXE" ] && echo 1)
-IS_LINUX=$([[ $PY_PLATFORM == linux* ]] && echo 1)
-IS_MINGW=$([[ $PY_PLATFORM == mingw* ]] && echo 1)
+IS_CONDA=$([ -n "$CONDA_EXE" ] && echo "1")
+IS_LINUX=$([[ $PY_PLATFORM == linux* ]] && echo "1")
+IS_MINGW=$([[ $PY_PLATFORM == mingw* ]] && echo "1")
+IS_WINDOWS=$([[ $PY_PLATFORM == win* ]] && echo "1")
 
 # For Linux
 PYTHON_FOR_DEV="3.12"
@@ -106,7 +107,10 @@ elif [ "$IS_MINGW" == "1" ]; then
     echo "Install packages"
     pacman --needed --noconfirm --quiet -S "${pkgs[@]}"
 else
-    if [ "$CI" == "1" ]; then
+    if [ "$CI" == "true" ]; then
+        if [ "$IS_WINDOWS" == "1" ]; then
+            export UV_LINK_MODE=copy
+        fi
         if ! which uv &>/dev/null; then
             echo "error: Please install uv"
             exit 1

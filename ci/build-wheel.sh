@@ -25,6 +25,7 @@ PY_ABI_THREAD=$($PYTHON -c "import sysconfig; print(sysconfig.get_config_var('ab
 
 IS_CONDA=$([ -n "$CONDA_EXE" ] && echo "1")
 IS_MINGW=$([[ $PY_PLATFORM == mingw* ]] && echo "1")
+IS_WINDOWS=$([[ $PY_PLATFORM == win* ]] && echo "1")
 
 PYTHON_TAG=cp$PY_VERSION_NODOT
 if [ "$IS_CONDA" == "1" ]; then
@@ -142,6 +143,9 @@ _build_wheel () {
         # Do not export UV_SYSTEM_PYTHON to avoid conflict with uv in
         # cibuildwheel on macOS and Windows
         unset UV_SYSTEM_PYTHON
+        if [ "$CI" == "true" ] && [ "$IS_WINDOWS" == "1" ]; then
+            export UV_LINK_MODE=copy
+        fi
         if [ -e "$HOME/bin/cibuildwheel" ]; then
             "$HOME/bin/cibuildwheel" "$args"
         else
