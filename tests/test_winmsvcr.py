@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+import sys
+
+import pytest
+
+from freeze_core._compat import IS_LINUX, IS_WINDOWS
 from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
+
+# This test is really necessary on Windows, but it runs in other environments,
+# so I let it be tested on Python 3.12 Linux, which is used on Ubuntu 24.04.
+# On other systems, it is disabled, including mingw.
 
 MSVC_EXPECTED = (
     # VC 2015 and 2017
@@ -28,6 +37,10 @@ UCRT_EXPECTED = (
 )
 
 
+@pytest.mark.skipif(
+    not (IS_WINDOWS or (IS_LINUX and sys.version_info[:2] == (3, 12))),
+    reason="Windows tests",
+)
 def test_files() -> None:
     """Test MSVC files."""
     assert MSVC_EXPECTED == MSVC_FILES
