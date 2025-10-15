@@ -10,8 +10,8 @@
 | src/freeze\_core/icons/\_\_init\_\_.py  |        0 |        0 |    100.00% |           |
 | src/freeze\_core/legacy/\_\_init\_\_.py |        0 |        0 |    100.00% |           |
 | src/freeze\_core/winmsvcr.py            |        3 |        0 |    100.00% |           |
-| src/freeze\_core/winmsvcr\_repack.py    |      158 |       15 |     90.51% |110-111, 113-114, 139-140, 142-143, 241-244, 252-253, 312 |
-|                               **TOTAL** |  **186** |   **15** | **91.94%** |           |
+| src/freeze\_core/winmsvcr\_repack.py    |      156 |       15 |     90.38% |120-121, 123-124, 149-150, 152-153, 247-250, 258-259, 318 |
+|                               **TOTAL** |  **184** |   **15** | **91.85%** |           |
 
 
 ## Setup coverage badge
