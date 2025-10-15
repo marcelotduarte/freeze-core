@@ -40,7 +40,8 @@ if SOABI is None or IS_MINGW:
 class BuildBases(setuptools.command.build_ext.build_ext):
     """Build C bases and extension."""
 
-    def build_extension(self, ext) -> None:
+    def build_extension(self, ext) -> None:  # noqa: PLR0912, PLR0915
+        """Build the extension."""
         ext.include_dirs.append("src/freeze_core/include")
         if not ext.name.split(".")[1].startswith(("bases", "legacy")):
             super().build_extension(ext)
@@ -58,7 +59,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         fullname = os.fspath(Path(self.build_lib, filename))
         library_dirs = ext.library_dirs or []
         libraries = self.get_libraries(ext)
-        extra_args: list = ext.extra_link_args or []
+        extra_args: list[str] = ext.extra_link_args or []
         if PLATFORM.startswith("freebsd"):
             libraries.append("pthread")
         if IS_MINGW or IS_WINDOWS:
@@ -66,8 +67,8 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             # support for delay load [windows]
             for arg in extra_args[:]:
                 if arg.startswith("/DELAYLOAD:"):
-                    lib_name = arg[len("/DELAYLOAD:") :]
                     extra_args.remove(arg)
+                    lib_name = arg.removeprefix("/DELAYLOAD:")
                     dll_path = self._get_dll_path(lib_name)
                     dll_name = dll_path.name
                     if compiler_type == "msvc":
@@ -153,11 +154,17 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 raise LinkError from link_error
 
     def get_ext_filename(self, fullname) -> str:
+        """Convert the name of an extension into the name of the file.
+
+        Examples of returned names:
+            util.cp312-win_amd64.pyd
+            console-cp312-win32.exe
+            console-cp312-win_amd64.exe
+            console-cpython-312-x86_64-linux-gnu
+            console-cpython-312-darwin
+        """
         if fullname.endswith("util"):
             return super().get_ext_filename(fullname)
-        # Examples of returned names:
-        # console-cp39-win32.exe, console-cp39-win_amd64.exe,
-        # console-cpython-39-x86_64-linux-gnu, console-cpython-39-darwin
         path = Path(*fullname.split("."))
         name = path.name
         return os.path.normcase(path.parent / f"{name}-{SOABI}{EXE_SUFFIX}")
@@ -184,7 +191,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         # Use gendef and dlltool to generate the library (.a and .delay.a)
         dll_path = self._get_dll_path(name)
         gendef_exe = Path(which("gendef"))
-        def_data = check_output([gendef_exe, "-", dll_path])
+        def_data = check_output([gendef_exe, "-", dll_path])  # noqa: S603
         def_name = library_dir / f"{name}.def"
         def_name.write_bytes(def_data)
         lib_path = library_dir / f"lib{name}.a"
@@ -195,18 +202,19 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         output_delaylib_args = ["-y", dlb_path]
         try:
             # GNU binutils dlltool support --output-delaylib
-            check_call(dlltool + output_delaylib_args)
+            check_call(dlltool + output_delaylib_args)  # noqa: S603
         except CalledProcessError:
             # LLVM dlltool only supports generating an import library
-            check_call(dlltool)
+            check_call(dlltool)  # noqa: S603
             library = name
         return os.fspath(library_dir), library
 
     def _copy_libraries(self) -> None:
-        """Copy standard libraries to freeze_core wheel, on posix systems, when
-        python is compiled with --disable-shared, as is done in manylinux and
-        macpython. Modules such as math, _struct and zlib, which are normally
-        embedded in python, are compiled separately.
+        """Copy standard libraries to freeze_core wheel, on posix systems.
+
+        When python is compiled with --disable-shared, as is done in manylinux
+        and macpython, modules such as math, _struct and zlib, which are
+        normally embedded in python, are compiled separately.
         Also, copies tcl/tk libraries.
         """
         # do not copy libraries in develop mode, Windows, conda, etc
@@ -257,6 +265,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     self.copy_file(source.as_posix(), target)
 
     def run(self) -> None:
+        """Build extensions in build directory."""
         self._copy_libraries()
         super().run()
 

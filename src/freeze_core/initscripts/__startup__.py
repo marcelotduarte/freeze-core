@@ -1,5 +1,7 @@
-"""First script that is run when cx_Freeze starts up. It determines the name of
-the initscript that is to be executed after a basic initialization.
+"""First script that is run when cx_Freeze starts up.
+
+It determines the name of the initscript that is to be executed after a basic
+initialization.
 """
 
 from __future__ import annotations
@@ -32,11 +34,13 @@ class ExtensionFinder(PathFinder):
         path=None,
         target=None,  # noqa: ARG003
     ) -> ModuleSpec | None:
-        """Finder only for extension modules found within packages that
-        are included in the zip file (instead of as files on disk);
-        extension modules cannot be found within zip files but are stored in
-        the lib subdirectory; if the extension module is found in a package,
-        however, its name has been altered so this finder is needed.
+        """Finder for extension modules only.
+
+        The extension modules found within packages that are included in the
+        zip file (instead of as files on disk) cannot be found within zip files
+        but are stored in the lib subdirectory; if the extension module is
+        found in a package, however, its name has been altered so this finder
+        is needed.
         """
         if path is None:
             return None
@@ -67,7 +71,7 @@ def get_name(executable) -> str:
 
 
 def init() -> None:
-    """Basic initialization of the startup script."""
+    """Initialize the startup script."""
     # fix prefix if using console_legacy
     if not sys.prefix:
         sys.prefix = os.path.dirname(sys.executable)
@@ -112,7 +116,7 @@ def init() -> None:
 
 
 def run() -> None:
-    """Determines the name of the initscript and execute it."""
+    """Determine the name of the initscript and execute it."""
     name = get_name(sys.executable)
     try:
         # basically is __init__ plus the basename of the executable

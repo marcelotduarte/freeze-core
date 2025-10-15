@@ -222,34 +222,27 @@ select = [
     "YTT",  # flake8-2020
 ]
 ignore = [
-    # ignored for now, but should be revised in future
-    # last revised using ruff 0.12.0
-    "D102",     # Missing docstring in public method
-    "D205",     # 1 blank line required between summary line and description
-    "D401",     # First line of docstring should be in imperative mood
-    "PERF203",  # `try`-`except` within a loop incurs performance overhead
-    # ignore the following
     "D105",     # Missing docstring in magic method
     "D107",     # Missing docstring in `__init__`
     "D203",     # conflict with D211
     "D213",     # conflict with D212
-    "PLR0912",  # too-many-branches
-    "PLR0915",  # too-many-statements
+    # should be revised in future - last revised using ruff 0.14.0
     "PYI021",   # Docstrings should not be included in stubs
-    # prone to false positives (https://github.com/astral-sh/ruff/issues/4045)
-    "S603",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "src/freeze_core/initscripts/*" = [
     "S102",     # Use of `exec` detected
 ]
+"tests/conftest.py" = [
+    "D102",     # Missing docstring in public method
+    "D205",     # 1 blank line required between summary line and description
+    "PLR0912",  # too-many-branches
+    "S603",     # `subprocess` call: check for execution of untrusted input
+]
 "tests/*" = [
     "S101",     # Use of `assert` detected
 ]
-"tests/test_winmsvcr*.py" = [
-    "PLC0415",  # `import` should be at the top-level of a file
- ]
 
 [tool.ruff.lint.flake8-builtins]
 strict-checking = true

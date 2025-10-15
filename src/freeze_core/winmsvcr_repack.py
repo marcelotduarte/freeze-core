@@ -49,6 +49,16 @@ EXE_FILENAMES = {
     "win32": "vc_redist.x86.exe",
 }
 
+VC_REDIST_CACHE = (
+    Path(
+        os.path.expandvars("${APPDATA}")
+        if os.environ.get("APPDATA")
+        else "~/.cache"
+    )
+    .joinpath("cx_Freeze/vc_redist")
+    .expanduser()
+)
+
 
 def split_self_extract_exe(
     exe_file: Path, target_directory: Path
@@ -222,11 +232,7 @@ def get_msvcr_files(
         raise RuntimeError(msg)
 
     # use a cache dir
-    if os.environ.get("APPDATA"):
-        cache_base = Path(os.path.expandvars("${APPDATA}"))
-    else:
-        cache_base = Path("~/.cache").expanduser()
-    cache_dir = cache_base / f"cx_Freeze/vc_redist/{version}"
+    cache_dir = VC_REDIST_CACHE / version
     cache_dir.mkdir(parents=True, exist_ok=True)
     filename = cache_dir / name
     unpack_dir = cache_dir / name.replace(".", "_")
@@ -235,13 +241,13 @@ def get_msvcr_files(
         if no_cache or (filename.exists() and filename.stat().st_size == 0):
             filename.unlink(missing_ok=True)
         url = VC_REDIST_BASE_URL.format(version=version, name=name)
-        while not filename.exists():
-            try:
+        try:
+            while not filename.exists():
                 urlretrieve(url, filename)  # noqa: S310
-            except ContentTooShortError as exc:
-                print("warning:", exc.reason, "of", name, file=sys.stderr)
-                print("retry!", file=sys.stderr)
-                filename.unlink(missing_ok=True)
+        except ContentTooShortError as exc:
+            print("warning:", exc.reason, "of", name, file=sys.stderr)
+            print("retry!", file=sys.stderr)
+            filename.unlink(missing_ok=True)
         if filename.exists():
             files = list(unpack_dir.glob("*.dll"))
             if no_cache or not files:

@@ -6,7 +6,7 @@ import pytest
 
 from freeze_core._compat import IS_CONDA, IS_MACOS, IS_MINGW, IS_WINDOWS
 from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
-from freeze_core.winmsvcr_repack import copy_msvcr_files
+from freeze_core.winmsvcr_repack import copy_msvcr_files, main_test
 
 
 # Test only on Windows and Linux (not conda on Linux)
@@ -73,8 +73,6 @@ def test_invalid(
 @pytest.mark.skipif(IS_MINGW, reason="Disabled in MinGW")
 def test_repack_main(tmp_package) -> None:
     """Test the freeze_core.winmsvcr_repack __main_ entry point with args."""
-    from freeze_core.winmsvcr_repack import main_test
-
     if not (IS_MINGW or IS_WINDOWS):
         tmp_package.install(["cabarchive", "striprtf"])
 
@@ -98,8 +96,6 @@ def test_repack_main(tmp_package) -> None:
 @pytest.mark.skipif(IS_MINGW, reason="Disabled in MinGW")
 def test_repack_main_no_option(tmp_package) -> None:
     """Test the freeze_core.winmsvcr_repack 'main' entry point without args."""
-    from freeze_core.winmsvcr_repack import main_test
-
     if not (IS_MINGW or IS_WINDOWS):
         tmp_package.install(["cabarchive", "striprtf"])
 

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from freeze_core._compat import IS_WINDOWS
+from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
 
 MSVC_EXPECTED = (
     # VC 2015 and 2017
@@ -30,10 +28,7 @@ UCRT_EXPECTED = (
 )
 
 
-@pytest.mark.skipif(not IS_WINDOWS, reason="Windows tests")
 def test_files() -> None:
     """Test MSVC files."""
-    from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
-
     assert MSVC_EXPECTED == MSVC_FILES
     assert UCRT_EXPECTED == UCRT_FILES
