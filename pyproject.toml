@@ -128,7 +128,9 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 
 [[tool.cibuildwheel.overrides]]
 select = "cp3{10,11,12,13,14}-win_amd64"
-before-build = "uv pip install cx-logging"
+before-build = """
+uv pip install "setuptools>=78.1.1,<=80.9.0" cx-logging
+"""
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 
 [tool.coverage.html]
