@@ -1,10 +1,11 @@
-"""Initialization script for cx_Freeze which manipulates the path so that the
-directory in which the executable is found is searched for extensions but
-no other directory is searched. The environment variable LD_LIBRARY_PATH is
-manipulated first, however, to ensure that shared libraries found in the
-target directory are found. This requires a restart of the executable because
-the environment variable LD_LIBRARY_PATH is only checked at startup.
+"""Initialization script for cx_Freeze.
 
+This initialization script manipulates the path so that the directory in which
+the executable is found is searched for extensions but no other directory is
+searched. The environment variable LD_LIBRARY_PATH is manipulated first,
+however, to ensure that shared libraries found in the target directory are
+found. This requires a restart of the executable because the environment
+variable LD_LIBRARY_PATH is only checked at startup.
 """
 
 from __future__ import annotations

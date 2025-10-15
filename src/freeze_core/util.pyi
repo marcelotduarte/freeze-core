@@ -18,15 +18,15 @@ def AddIcon(target_path: str | Path, exe_icon: str | Path) -> None:
 def BeginUpdateResource(
     path: str | Path, delete_existing_resources: bool = True
 ) -> HANDLE:
-    """Wrapper for BeginUpdateResource."""
+    """BeginUpdateResource wrapper."""
 
 def UpdateResource(
     handle: HANDLE, resource_type: int, resource_id: int, resource_data: bytes
 ) -> None:
-    """Wrapper for UpdateResource."""
+    """UpdateResource wrapper."""
 
 def EndUpdateResource(handle: HANDLE, discard_changes: bool) -> None:
-    """Wrapper for EndUpdateResource."""
+    """EndUpdateResource wrapper."""
 
 def UpdateCheckSum(target_path: str | Path) -> None:
     """Update the CheckSum into the specified executable."""
