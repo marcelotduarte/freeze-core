@@ -291,6 +291,10 @@ def get_extensions() -> list[Extension]:
             )
         ]
     if IS_MINGW or IS_WINDOWS:
+        try:
+            cx_logging = __import__("cx_Logging")
+        except ImportError:
+            cx_logging = None
         if version < (3, 13):
             extensions += [
                 Extension(
@@ -305,6 +309,7 @@ def get_extensions() -> list[Extension]:
                     depends=["src/freeze_core/legacy/common.c"],
                     extra_link_args=["/DELAYLOAD:cx_Logging"],
                     libraries=["advapi32"],
+                    optional=cx_logging is None,
                 ),
             ]
         extensions += [
@@ -324,6 +329,7 @@ def get_extensions() -> list[Extension]:
                 ],
                 extra_link_args=["/DELAYLOAD:cx_Logging"],
                 libraries=["advapi32"],
+                optional=cx_logging is None,
             ),
             Extension(
                 "freeze_core.util",

@@ -3,7 +3,6 @@ requires = [
     # setuptools 77.0.3+ supports PEP 639
     # setuptools 78.1.1 fix path traversal vulnerability
     "setuptools>=78.1.1,<=80.9.0",
-    "cx-logging>=3.1 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -40,7 +39,7 @@ dependencies = [
     "striprtf>=0.0.26 ;sys_platform == 'win32'",
 ]
 dynamic = ["version"]
-keywords = ["cx-freeze cxfreeze cx_Freeze freeze python"]
+keywords = ["freeze-core freeze cx-freeze cxfreeze cx_Freeze python"]
 license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
@@ -111,7 +110,6 @@ values = ["dev", "final"]
 optional_value = "final"
 
 [tool.cibuildwheel]
-before-build = "uv pip install -r pyproject.toml"
 build-frontend = "build[uv]"
 build-verbosity = 1
 enable = ["cpython-freethreading"]
@@ -127,6 +125,10 @@ archs = "universal2"
 repair-wheel-command = """
 delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {wheel}
 """
+
+[[tool.cibuildwheel.overrides]]
+select = "cp3{10,11,12,13,14}-win_amd64"
+before-build = "uv pip install cx-logging"
 
 [tool.coverage.html]
 directory = "build/coverage_html_report"
