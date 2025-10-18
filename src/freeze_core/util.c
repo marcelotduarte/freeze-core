@@ -518,15 +518,19 @@ static PyObject* ExtUpdateCheckSum(PyObject* self, // passthrough argument
 //-----------------------------------------------------------------------------
 // Methods
 //-----------------------------------------------------------------------------
-static PyMethodDef g_ModuleMethods[]
-    = { { "AddIcon", ExtAddIcon, METH_VARARGS },
-          { "BeginUpdateResource", ExtBeginUpdateResource, METH_VARARGS },
-          { "UpdateResource", ExtUpdateResource, METH_VARARGS },
-          { "EndUpdateResource", ExtEndUpdateResource, METH_VARARGS },
-          { "GetDependentFiles", ExtGetDependentFiles, METH_VARARGS },
-          { "GetSystemDir", ExtGetSystemDir, METH_NOARGS },
-          { "GetWindowsDir", ExtGetWindowsDir, METH_NOARGS },
-          { "UpdateCheckSum", ExtUpdateCheckSum, METH_VARARGS }, { NULL } };
+// clang-format off
+static PyMethodDef g_ModuleMethods[] = {
+    { "AddIcon", ExtAddIcon, METH_VARARGS },
+    { "BeginUpdateResource", ExtBeginUpdateResource, METH_VARARGS },
+    { "UpdateResource", ExtUpdateResource, METH_VARARGS },
+    { "EndUpdateResource", ExtEndUpdateResource, METH_VARARGS },
+    { "GetDependentFiles", ExtGetDependentFiles, METH_VARARGS },
+    { "GetSystemDir", ExtGetSystemDir, METH_NOARGS },
+    { "GetWindowsDir", ExtGetWindowsDir, METH_NOARGS },
+    { "UpdateCheckSum", ExtUpdateCheckSum, METH_VARARGS },
+    { NULL }
+};
+// clang-format on
 
 //-----------------------------------------------------------------------------
 //   Declaration of module definition for Python 3.x.
@@ -556,5 +560,8 @@ PyMODINIT_FUNC PyInit_util(void)
         return NULL;
     if (PyModule_AddObject(module, "BindError", g_BindErrorException) < 0)
         return NULL;
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
     return module;
 }
