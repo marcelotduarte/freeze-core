@@ -55,7 +55,7 @@ VC_REDIST_CACHE = (
         if os.environ.get("APPDATA")
         else "~/.cache"
     )
-    .joinpath("cx_Freeze/vc_redist")
+    .joinpath("cxfreeze/vc_redist")
     .expanduser()
 )
 

@@ -1,4 +1,4 @@
-"""Compiled functions for cx_Freeze."""
+"""Compiled functions in freeze_core.util."""
 
 from pathlib import Path
 
