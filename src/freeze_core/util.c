@@ -536,7 +536,7 @@ static PyMethodDef g_ModuleMethods[] = {
 //   Declaration of module definition for Python 3.x.
 //-----------------------------------------------------------------------------
 static struct PyModuleDef g_ModuleDef = {
-    PyModuleDef_HEAD_INIT, "cx_Freeze.util", NULL, -1,
+    PyModuleDef_HEAD_INIT, "freeze_core.util", NULL, -1,
     g_ModuleMethods, // methods
     NULL,            // m_reload
     NULL,            // traverse
@@ -555,7 +555,7 @@ PyMODINIT_FUNC PyInit_util(void)
     if (!module)
         return NULL;
     g_BindErrorException
-        = PyErr_NewException("cx_Freeze.util.BindError", NULL, NULL);
+        = PyErr_NewException("freeze_core.util.BindError", NULL, NULL);
     if (!g_BindErrorException)
         return NULL;
     if (PyModule_AddObject(module, "BindError", g_BindErrorException) < 0)
