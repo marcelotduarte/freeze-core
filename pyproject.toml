@@ -54,7 +54,7 @@ dev = [
     "pre-commit==4.3.0",           # python_version >= 3.9
 ]
 tests = [
-    "coverage==7.10.7",
+    "coverage==7.11.3",
     "pytest==8.4.2",
 ]
 
