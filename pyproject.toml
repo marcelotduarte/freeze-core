@@ -51,7 +51,7 @@ requires-python = ">=3.10"
 dev = [
     "bump-my-version==1.2.4",
     "cibuildwheel==3.2.1",
-    "pre-commit==4.3.0",           # python_version >= 3.9
+    "pre-commit==4.4.0",           # python_version >= 3.9
 ]
 tests = [
     "coverage==7.10.7",
