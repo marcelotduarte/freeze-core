@@ -33,6 +33,10 @@ From the conda-forge channel:
 conda install conda-forge::freeze-core
 ```
 
+> [!WARNING]
+> It is not recommended to use `pip` in conda environment. See why in
+> [Using Pip in a Conda Environment](https://www.anaconda.com/blog/using-pip-in-a-conda-environment).
+
 To install the latest development build:
 
 ```
