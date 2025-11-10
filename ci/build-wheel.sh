@@ -168,7 +168,7 @@ if [ -z "$VERSION" ]; then
 fi
 if [ -z "$VERSION" ]; then
     NAME=$(echo "$NAME" | awk -F- '{print $2}')
-    NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
+    NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
     if [ -d src ]; then
         FILENAME=src/$NAME/__init__.py
     else
