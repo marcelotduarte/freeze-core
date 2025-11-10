@@ -45,7 +45,7 @@ keywords = ["freeze-core freeze cx-freeze cxfreeze cx_Freeze python"]
 license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = [
@@ -172,7 +172,7 @@ parallel = true
 relative_files = true
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "8.0"
 addopts = "-rpfEsXx"
 testpaths = ["tests"]
 filterwarnings = [
