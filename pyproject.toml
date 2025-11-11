@@ -35,7 +35,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "filelock>=3.12.3",
+    "filelock>=3.15.3",
     # Windows
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
     "striprtf>=0.0.26 ;sys_platform == 'win32'",
@@ -51,11 +51,11 @@ requires-python = ">=3.10"
 dev = [
     "bump-my-version==1.2.4",
     "cibuildwheel==3.2.1",
-    "pre-commit==4.3.0",           # python_version >= 3.9
+    "pre-commit==4.4.0",
 ]
 tests = [
-    "coverage==7.10.7",
-    "pytest==8.4.2",
+    "coverage==7.11.3",
+    "pytest==9.0.0",
 ]
 
 [project.urls]
@@ -121,6 +121,13 @@ archs = "x86_64 aarch64 ppc64le"
 before-build = """
 cd /opt/_internal && tar -xvf static-libs-for-embedding-only.tar.xz
 """
+# keep this setting until cibuildwheel uses the tag 2025.11.10-0 or higher
+# that supports zstd on python 3.14
+manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:latest"
+manylinux-aarch64-image = "quay.io/pypa/manylinux2014_aarch64:latest"
+manylinux-ppc64le-image = "quay.io/pypa/manylinux2014_ppc64le:latest"
+musllinux-x86_64-image = "quay.io/pypa/musllinux2014_x86_64:latest"
+musllinux-aarch64-image = "quay.io/pypa/musllinux2014_aarch64:latest"
 
 [tool.cibuildwheel.macos]
 archs = "universal2"
