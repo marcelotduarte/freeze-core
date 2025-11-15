@@ -24,10 +24,10 @@ repos:
     hooks:
       - id: validate-pyproject
         additional_dependencies:
-          - validate-pyproject-schema-store[all]>=2024.11.22
+          - validate-pyproject-schema-store[all]>=2025.11.14
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.4
+    rev: v0.14.5
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes"]
@@ -55,13 +55,10 @@ repos:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
-  - repo: local
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        name: shell script analysis tool
-        entry: shellcheck
-        language: system
-        files: ^(.*.sh)$
 
   - repo: local
     hooks:
