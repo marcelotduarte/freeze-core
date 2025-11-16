@@ -49,6 +49,16 @@ repos:
           (?x)^(src/freeze_core/include/pythoncapi_compat.h)$
         types_or: [c, c++]
 
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.16.3
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.3.5
+    hooks:
+      - id: cpplint
+
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.6.2
     hooks:
@@ -77,15 +87,3 @@ repos:
         files: ^(pyproject.toml|requirements.txt|requirements-dev.txt|
           tests/requirements.txt
           )$
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.16.3
-    hooks:
-      - id: gitleaks
-  - repo: https://github.com/pocc/pre-commit-hooks
-    rev: v1.3.5
-    hooks:
-      - id: cpplint
-  - repo: https://github.com/pylint-dev/pylint
-    rev: v2.17.2
-    hooks:
-      - id: pylint
