@@ -112,13 +112,14 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 extra_args.extend(get_config_var("LIBS").split())
             if get_config_var("LIBM"):
                 extra_args.append(get_config_var("LIBM"))
-            if get_config_var("BASEMODLIBS"):
-                extra_args.extend(get_config_var("BASEMODLIBS").split())
-            if get_config_var("LOCALMODLIBS"):
-                extra_args.extend(get_config_var("LOCALMODLIBS").split())
-                # fix for Python 3.12 Ubuntu Linux 24.04 (Noble Nimbat)
-                with contextlib.suppress(ValueError):
-                    extra_args.remove("Modules/_hacl/libHacl_Hash_SHA2.a")
+            if 0:
+                if get_config_var("BASEMODLIBS"):
+                    extra_args.extend(get_config_var("BASEMODLIBS").split())
+                if get_config_var("LOCALMODLIBS"):
+                    extra_args.extend(get_config_var("LOCALMODLIBS").split())
+                    # fix for Python 3.12 Ubuntu Linux 24.04 (Noble Nimbat)
+                    with contextlib.suppress(ValueError):
+                        extra_args.remove("Modules/_hacl/libHacl_Hash_SHA2.a")
             if IS_MACOS:
                 extra_args.append("-Wl,-export_dynamic")
                 extra_args.append("-Wl,-rpath,@loader_path/lib")
