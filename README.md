@@ -105,7 +105,7 @@ installed.
 
 ## See also:
 
-[Changelog](https://github.com/marcelotduarte/freeze-core/blob/main/CHANGELOG.md)
+[Changelog](https://github.com/marcelotduarte/freeze-core/releases)
 
 [Documentation](https://cx-freeze.readthedocs.io).
 
