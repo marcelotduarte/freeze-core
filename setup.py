@@ -97,7 +97,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 with contextlib.suppress(ValueError):
                     self.compiler.ldflags_exe.remove("/MANIFEST:EMBED,ID=1")
             elif compiler_type == "mingw32":
-                if "Win32GUI" in ext.name:
+                if ext.name.endswith(("gui", "Win32GUI")):
                     extra_args.append("-mwindows")
                 else:
                     extra_args.append("-mconsole")
