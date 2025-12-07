@@ -3,7 +3,7 @@ requires = [
     # setuptools 77.0.3+ supports PEP 639
     # setuptools 78.1.1 fix path traversal vulnerability
     "setuptools>=78.1.1,<81",
-    "cx-logging>=3.1 ;sys_platform == 'win32'",
+    "cx-logging>=3.2 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -19,7 +19,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -56,7 +55,7 @@ dev = [
 ]
 tests = [
     "coverage==7.12.0",
-    "pytest==9.0.1",
+    "pytest==9.0.2",
 ]
 
 [project.urls]
