@@ -49,7 +49,7 @@ email = "marcelotduarte@users.noreply.github.com"
 
 [project.optional-dependencies]
 dev = [
-    "bump-my-version==1.2.4",
+    "bump-my-version==1.2.5",
     "cibuildwheel==3.3.0",
     "pre-commit==4.5.0",
 ]
