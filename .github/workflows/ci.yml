@@ -39,7 +39,7 @@ jobs:
           egress-policy: audit
 
       - name: Download all artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: wheelhouse
           pattern: freeze-core-wheel-*
@@ -96,7 +96,7 @@ jobs:
           enable-cache: true
 
       - name: Download the wheel
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           merge-multiple: true
           pattern: freeze-core-wheel-${{ matrix.os }}*
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
       - name: Download coverage data
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: cov-*
           merge-multiple: true
