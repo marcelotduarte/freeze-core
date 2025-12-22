@@ -51,7 +51,7 @@ email = "marcelotduarte@users.noreply.github.com"
 dev = [
     "bump-my-version==1.2.5",
     "cibuildwheel==3.3.0",
-    "pre-commit==4.5.0",
+    "pre-commit==4.5.1",
 ]
 tests = [
     "coverage==7.13.0",
