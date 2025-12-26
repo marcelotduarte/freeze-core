@@ -6,19 +6,17 @@ import sys
 
 import pytest
 
-from freeze_core._compat import IS_LINUX, IS_MINGW, IS_WINDOWS
+from freeze_core._compat import IS_LINUX, IS_MINGW, IS_UCRT, IS_WINDOWS
 from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
 from freeze_core.winmsvcr_repack import copy_msvcr_files, main_test
 
 # This test is really necessary on Windows, but it runs in other environments,
 # so I let it be tested on Python 3.12 Linux, which is used on Ubuntu 24.04.
-# On other systems, it is disabled, including mingw.
+
+TEST_ENABLED = IS_UCRT or (IS_LINUX and sys.version_info[:2] == (3, 12))
 
 
-@pytest.mark.skipif(
-    not (IS_WINDOWS or (IS_LINUX and sys.version_info[:2] == (3, 12))),
-    reason="Windows tests",
-)
+@pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
 @pytest.mark.parametrize(
     ("version", "platform", "no_cache"),
     [
@@ -52,10 +50,7 @@ def test_versions(
     assert names != []
 
 
-@pytest.mark.skipif(
-    not (IS_WINDOWS or (IS_LINUX and sys.version_info[:2] == (3, 12))),
-    reason="Windows tests",
-)
+@pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
 @pytest.mark.parametrize(
     ("version", "platform", "expected_exception", "expected_match"),
     [
@@ -76,10 +71,7 @@ def test_invalid(
         copy_msvcr_files(tmp_package.path, platform, version)
 
 
-@pytest.mark.skipif(
-    not (IS_WINDOWS or (IS_LINUX and sys.version_info[:2] == (3, 12))),
-    reason="Windows tests",
-)
+@pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
 def test_repack_main(tmp_package) -> None:
     """Test the freeze_core.winmsvcr_repack __main_ entry point with args."""
     if not (IS_MINGW or IS_WINDOWS):
@@ -100,10 +92,7 @@ def test_repack_main(tmp_package) -> None:
     assert names != []
 
 
-@pytest.mark.skipif(
-    not (IS_WINDOWS or (IS_LINUX and sys.version_info[:2] == (3, 12))),
-    reason="Windows tests",
-)
+@pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
 def test_repack_main_no_option(tmp_package) -> None:
     """Test the freeze_core.winmsvcr_repack 'main' entry point without args."""
     if not (IS_MINGW or IS_WINDOWS):
