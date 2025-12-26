@@ -5,13 +5,13 @@
 | Name                                    |    Stmts |     Miss |      Cover |   Missing |
 |---------------------------------------- | -------: | -------: | ---------: | --------: |
 | src/freeze\_core/\_\_init\_\_.py        |        1 |        0 |    100.00% |           |
-| src/freeze\_core/\_compat.py            |       24 |        0 |    100.00% |           |
+| src/freeze\_core/\_compat.py            |       26 |        0 |    100.00% |           |
 | src/freeze\_core/bases/\_\_init\_\_.py  |        0 |        0 |    100.00% |           |
 | src/freeze\_core/icons/\_\_init\_\_.py  |        0 |        0 |    100.00% |           |
 | src/freeze\_core/legacy/\_\_init\_\_.py |        0 |        0 |    100.00% |           |
 | src/freeze\_core/winmsvcr.py            |        3 |        0 |    100.00% |           |
 | src/freeze\_core/winmsvcr\_repack.py    |      156 |       15 |     90.38% |120-121, 123-124, 149-150, 152-153, 247-250, 258-259, 318 |
-| **TOTAL**                               |  **184** |   **15** | **91.85%** |           |
+| **TOTAL**                               |  **186** |   **15** | **91.94%** |           |
 
 
 ## Setup coverage badge
