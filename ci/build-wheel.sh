@@ -160,7 +160,7 @@ NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
 VERSION=$(_bump_my_version show current_version)
 if [ -z "$VERSION" ]; then
     if [ -d src ]; then
-        FILENAME=src/$NAME/__init__.py
+        FILENAME=src/$NORMALIZED_NAME/__init__.py
     else
         FILENAME=$NAME/__init__.py
     fi
@@ -170,7 +170,7 @@ if [ -z "$VERSION" ]; then
     NAME=$(echo "$NAME" | awk -F- '{print $2}')
     NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
     if [ -d src ]; then
-        FILENAME=src/$NAME/__init__.py
+        FILENAME=src/$NORMALIZED_NAME/__init__.py
     else
         FILENAME=$NAME/__init__.py
     fi
@@ -188,7 +188,7 @@ echo "::endgroup::"
 mkdir -p wheelhouse >/dev/null
 DIRTY=$(_bump_my_version show scm_info.dirty)
 FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION"
-FILEEXISTS=$(ls "wheelhouse/$FILEMASK.tar.gz" 2>/dev/null || echo '')
+FILEEXISTS=$(find "wheelhouse/$FILEMASK.tar.gz" 2>/dev/null || echo '')
 if [ "$DIRTY" == "True" ] || [ -z "$FILEEXISTS" ]; then
     echo "::group::Build sdist"
     _build_sdist
@@ -197,7 +197,7 @@ fi
 echo "::group::Build wheel(s)"
 if [ "$BUILD_TAG" == "$BUILD_TAG_DEFAULT" ]; then
     FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION-$PYTHON_TAG-$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG_MASK"
-    FILEEXISTS=$(ls "wheelhouse/$FILEMASK.whl" 2>/dev/null || echo '')
+    FILEEXISTS=$(find "wheelhouse/$FILEMASK.whl" 2>/dev/null || echo '')
     if [ "$DIRTY" == "True" ] || [ -z "$FILEEXISTS" ]; then
         _build_wheel --only "$BUILD_TAG_DEFAULT"
     fi
@@ -211,11 +211,11 @@ echo "::endgroup::"
 if [ "$INSTALL" == "1" ]; then
     echo "::group::Install $NORMALIZED_NAME $NORMALIZED_VERSION"
     if [[ $PY_PLATFORM == mingw* ]]; then
-        pip install "$NORMALIZED_NAME==$NORMALIZED_VERSION" -f wheelhouse \
-            --no-deps --no-index --force-reinstall
+        PIP_COMMAND="pip install --force-reinstall"
     else
-        uv pip install "$NORMALIZED_NAME==$NORMALIZED_VERSION" -f wheelhouse \
-            --no-build --no-deps --no-index --prerelease=allow --reinstall
+        PIP_COMMAND="uv pip install --no-build --prerelease=allow --reinstall"
     fi
+    $PIP_COMMAND "$NORMALIZED_NAME==$NORMALIZED_VERSION" -f wheelhouse \
+            --no-deps --no-index
     echo "::endgroup::"
 fi
