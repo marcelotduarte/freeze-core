@@ -50,7 +50,7 @@ email = "marcelotduarte@users.noreply.github.com"
 [project.optional-dependencies]
 dev = [
     "bump-my-version==1.2.6",
-    "cibuildwheel==3.3.0",
+    "cibuildwheel==3.3.1",
     "pre-commit==4.5.1",
 ]
 tests = [
@@ -121,13 +121,6 @@ archs = "x86_64 aarch64 ppc64le"
 before-build = """
 cd /opt/_internal && tar -xvf static-libs-for-embedding-only.tar.xz
 """
-# keep this setting until cibuildwheel uses the tag 2025.11.10-0 or higher
-# that supports zstd on python 3.14
-manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:latest"
-manylinux-aarch64-image = "quay.io/pypa/manylinux2014_aarch64:latest"
-manylinux-ppc64le-image = "quay.io/pypa/manylinux2014_ppc64le:latest"
-musllinux-x86_64-image = "quay.io/pypa/musllinux_1_2_x86_64:latest"
-musllinux-aarch64-image = "quay.io/pypa/musllinux_1_2_aarch64:latest"
 
 [tool.cibuildwheel.macos]
 archs = "universal2"
@@ -247,6 +240,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "src/freeze_core/initscripts/*" = [
     "S102",     # Use of `exec` detected
+]
+"src/freeze_core/initscripts/__startup__.py" = [
+    "SIM105",   # suppressible-exception
 ]
 "tests/conftest.py" = [
     "D102",     # Missing docstring in public method
