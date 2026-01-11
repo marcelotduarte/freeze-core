@@ -6,14 +6,13 @@ initialization.
 
 from __future__ import annotations
 
-import contextlib
 import os
 import string
 import sys
-from importlib.machinery import (
+from _frozen_importlib import ModuleSpec
+from _frozen_importlib_external import (
     EXTENSION_SUFFIXES,
     ExtensionFileLoader,
-    ModuleSpec,
     PathFinder,
 )
 
@@ -94,11 +93,12 @@ def init() -> None:
             entry for entry in sys.path if os.path.isdir(entry)
         ]
         # add to dll search path (or to path)
-        env_path = os.environ.get("PATH", "").split(os.pathsep)
-        env_path = list(map(os.path.normpath, env_path))
+        env_path = list(map(os.path.normpath, os.get_exec_path()))
         for directory in search_path:
-            with contextlib.suppress(OSError):
+            try:
                 os.add_dll_directory(directory)
+            except OSError:
+                pass
             # we need to add to path for packages like 'gi' in MSYS2
             if directory not in env_path:
                 env_path.insert(0, directory)
