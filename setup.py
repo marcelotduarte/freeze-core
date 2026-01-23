@@ -305,6 +305,12 @@ def get_extensions() -> list[Extension]:
                     libraries=["user32"],
                 ),
                 Extension(
+                    "freeze_core.legacy.Win32GUI_ACCEL",
+                    ["src/freeze_core/legacy/Win32GUI_accel.c"],
+                    depends=["src/freeze_core/legacy/common.c"],
+                    libraries=["user32"],
+                ),
+                Extension(
                     "freeze_core.legacy.Win32Service",
                     ["src/freeze_core/legacy/Win32Service.c"],
                     depends=["src/freeze_core/legacy/common.c"],
@@ -318,6 +324,14 @@ def get_extensions() -> list[Extension]:
                 "freeze_core.bases.gui",
                 [
                     "src/freeze_core/bases/Win32GUI.c",
+                    "src/freeze_core/bases/_common.c",
+                ],
+                libraries=["user32"],
+            ),
+            Extension(
+                "freeze_core.bases.gui_accel",
+                [
+                    "src/freeze_core/bases/Win32GUI_accel.c",
                     "src/freeze_core/bases/_common.c",
                 ],
                 libraries=["user32"],
