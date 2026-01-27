@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import io
 import json
 import os
@@ -189,6 +190,8 @@ class TempPackage:
         cwd: str | Path | None = None,
         env: dict[str, str] | None = None,
         timeout: float | None = None,
+        *,
+        raise_on_timeout: bool = True,
     ) -> pytest.RunResult:
         """Execute a command, specified in 'command'."""
         __tracebackhide__ = True
@@ -218,22 +221,34 @@ class TempPackage:
         if command[0] == "python":
             command[0] = self.python
         cwd = os.fspath(self.path if cwd is None else cwd)
-        process = subprocess.run(
-            command,
-            capture_output=True,
-            check=False,
-            cwd=cwd,
-            env=env,
-            text=True,
-            timeout=timeout,
-        )
-        print(process.stdout)
-        print(process.stderr)
+        try:
+            process = subprocess.run(
+                command,
+                capture_output=True,
+                check=False,
+                cwd=cwd,
+                env=env,
+                text=True,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired as exc:
+            if raise_on_timeout:
+                raise
+            returncode = errno.ETIMEDOUT
+            stdout = exc.output or ""
+            stderr = exc.stderr or ""
+        else:
+            returncode = process.returncode
+            stdout = process.stdout or ""
+            stderr = process.stderr or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode()
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode()
+        print(stdout)
+        print(stderr, file=sys.stderr)
         return pytest.RunResult(
-            process.returncode,
-            process.stdout.splitlines(),
-            process.stderr.splitlines(),
-            0,
+            returncode, stdout.splitlines(), stderr.splitlines(), 0
         )
 
     def install(
@@ -429,14 +444,12 @@ class TempPackage:
         # remove build directory (to reduce disk usage)
         if not self.request.config.option.venv_keep_build:
             build_dir: Path = self.path / "build"
-            if build_dir.is_dir():
-                rmtree(build_dir, ignore_errors=True)
+            rmtree(build_dir, ignore_errors=True)
 
         # remove temporary prefix (to reduce disk usage)
         if not self.request.config.option.venv_keep_prefix:
             tmp_prefix = self.path / ".tmp_prefix"
-            if tmp_prefix.is_dir():
-                rmtree(tmp_prefix, ignore_errors=True)
+            rmtree(tmp_prefix, ignore_errors=True)
 
 
 class TempPackageVenv(TempPackage):
