@@ -323,9 +323,9 @@ def get_extensions() -> list[Extension]:
                 libraries=["user32"],
             ),
             Extension(
-                "freeze_core.bases.gui_accel",
+                "freeze_core.bases.gui_dgpu",
                 [
-                    "src/freeze_core/bases/Win32GUI_accel.c",
+                    "src/freeze_core/bases/Win32GUI_dgpu.c",
                     "src/freeze_core/bases/_common.c",
                 ],
                 libraries=["user32"],
