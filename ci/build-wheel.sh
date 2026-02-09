@@ -5,11 +5,12 @@ _CI_DIR=$(dirname "${BASH_SOURCE[0]}")
 CI_DIR=$(cd "$_CI_DIR" && pwd)
 
 # Python information (platform and version)
+INSTALL_DIR="$HOME/bin"
 INSTALL_TOOLS="1"
 if [ -n "$UV_PYTHON" ]; then
     if ! which uv &>/dev/null; then
         # Install/update uv
-        "$CI_DIR/install-tools.sh"
+        "$CI_DIR/install-tools.sh" --dev
         INSTALL_TOOLS="0"
     fi
     PYTHON=$(uv python find "$UV_PYTHON")
@@ -78,43 +79,23 @@ while [ -n "$1" ]; do
 done
 
 # Install/update uv and dev tools
-INSTALL_DEV="0"
-if [ "$IS_CONDA" == "1" ] || [ "$IS_MINGW" == "1" ]; then
-    if ! [ -e "$HOME/bin/bump-my-version" ]; then
-        INSTALL_DEV="1"
-    fi
-else
-    if [[ $PY_PLATFORM == linux* ]]; then
-        if ! [ -e "$HOME/bin/bump-my-version" ] || \
-           ! [ -e "$HOME/bin/cibuildwheel" ]; then
-            INSTALL_DEV="1"
-        fi
-    else
-        if ! which bump-my-version &>/dev/null || \
-           ! which cibuildwheel &>/dev/null || \
-           ! which pyproject-build &>/dev/null; then
-            INSTALL_DEV="1"
-        fi
-    fi
-fi
-
-if [ "$INSTALL_TOOLS" == "1" ] || [ "$INSTALL_DEV" == "1" ]; then
-    if [ "$INSTALL_DEV" == "1" ]; then
-        "$CI_DIR/install-tools.sh" --dev
-    else
-        "$CI_DIR/install-tools.sh"
-    fi
+if [ "$INSTALL_TOOLS" == "1" ]; then
+    "$CI_DIR/install-tools.sh" --dev
 fi
 
 # Use of dev tools
-_bump_my_version () {
+_get_version () {
     local value
-    if which bump-my-version &>/dev/null; then
-        value=$(bump-my-version "$*" 2>/dev/null)
-    elif [ -e "$HOME/bin/bump-my-version" ]; then
-        value=$("$HOME/bin/bump-my-version" "$*" 2>/dev/null)
+    value=$(uv version --short)
+    $PYTHON -c "print('$value'.replace('\r','').replace('\n',''), end='')"
+}
+
+_get_dirty () {
+    local value
+    if which git &>/dev/null; then
+        value=$(git status --short -uno | wc -l)
     else
-        exit 1
+        value=1
     fi
     $PYTHON -c "print('$value'.replace('\r','').replace('\n',''), end='')"
 }
@@ -122,10 +103,6 @@ _bump_my_version () {
 _build_sdist () {
     if [ "$IS_CONDA" == "1" ] || [ "$IS_MINGW" == "1" ]; then
         $PYTHON -m build -n -x --sdist -o wheelhouse
-    elif [ -e "$HOME/bin/pyproject-build" ]; then
-        "$HOME/bin/pyproject-build" --sdist -o wheelhouse
-    elif which pyproject-build &>/dev/null; then
-         $PYTHON -m build --sdist -o wheelhouse
     else
         uv build -p "$PY_VERSION$PY_ABI_THREAD" --sdist -o wheelhouse
     fi
@@ -146,18 +123,14 @@ _build_wheel () {
         if [ "$CI" == "true" ] && [ "$IS_WINDOWS" == "1" ]; then
             export UV_LINK_MODE=copy
         fi
-        if [ -e "$HOME/bin/cibuildwheel" ]; then
-            "$HOME/bin/cibuildwheel" "$args"
-        else
-            $PYTHON -m cibuildwheel "$args"
-        fi
+        "$INSTALL_DIR/cibuildwheel" "$args"
     fi
 }
 
 echo "::group::Project version"
 NAME=$(grep -m1 "^name = " pyproject.toml | awk -F\" '{print $2}')
 NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
-VERSION=$(_bump_my_version show current_version)
+VERSION=$(_get_version)
 if [ -z "$VERSION" ]; then
     if [ -d src ]; then
         FILENAME=src/$NORMALIZED_NAME/__init__.py
@@ -186,10 +159,10 @@ echo "Version: $VERSION ($NORMALIZED_VERSION)"
 echo "::endgroup::"
 
 mkdir -p wheelhouse >/dev/null
-DIRTY=$(_bump_my_version show scm_info.dirty)
+DIRTY=$(_get_dirty)
 FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION"
 FILEEXISTS=$(find "wheelhouse/$FILEMASK.tar.gz" 2>/dev/null || echo '')
-if [ "$DIRTY" == "True" ] || [ -z "$FILEEXISTS" ]; then
+if [ "$DIRTY" != "0" ] || [ -z "$FILEEXISTS" ]; then
     echo "::group::Build sdist"
     _build_sdist
     echo "::endgroup::"
@@ -198,7 +171,7 @@ echo "::group::Build wheel(s)"
 if [ "$BUILD_TAG" == "$BUILD_TAG_DEFAULT" ]; then
     FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION-$PYTHON_TAG-$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG_MASK"
     FILEEXISTS=$(find "wheelhouse/$FILEMASK.whl" 2>/dev/null || echo '')
-    if [ "$DIRTY" == "True" ] || [ -z "$FILEEXISTS" ]; then
+    if [ "$DIRTY" != "0" ] || [ -z "$FILEEXISTS" ]; then
         _build_wheel --only "$BUILD_TAG_DEFAULT"
     fi
 elif [ -n "$BUILD_TAG" ]; then

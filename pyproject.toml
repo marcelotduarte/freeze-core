@@ -9,6 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "freeze-core"
+version = "0.6.0.dev0"
 description = "Core dependency for cx_Freeze"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -36,7 +37,6 @@ dependencies = [
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
     "striprtf>=0.0.26 ;sys_platform == 'win32'",
 ]
-dynamic = ["version"]
 keywords = ["freeze-core freeze cx-freeze cxfreeze cx_Freeze python"]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -47,17 +47,6 @@ requires-python = ">=3.10"
 name = "Marcelo Duarte"
 email = "marcelotduarte@users.noreply.github.com"
 
-[project.optional-dependencies]
-dev = [
-    "bump-my-version==1.2.6",
-    "cibuildwheel==3.3.1 ;python_version >= '3.11'",
-    "pre-commit==4.5.1",
-]
-tests = [
-    "coverage==7.13.2",
-    "pytest==9.0.2",
-]
-
 [project.urls]
 Home = "https://marcelotduarte.github.io/cx_Freeze"
 Changelog = "https://github.com/marcelotduarte/freeze-core/releases"
@@ -65,51 +54,27 @@ Documentation = "https://cx-freeze.readthedocs.io"
 Source = "https://github.com/marcelotduarte/freeze-core"
 Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 
+[dependency-groups]
+dev = [
+    "cibuildwheel==3.3.1",
+    "pre-commit==4.5.1",
+]
+tests = [
+    "coverage==7.13.2",
+    "pytest==9.0.2",
+]
+
+[tool.uv.dependency-groups]
+dev = {requires-python = ">=3.11"}
+
 [tool.setuptools]
 include-package-data = true
 package-dir = {"" = "src"}
 zip-safe = false
 
-[tool.setuptools.dynamic]
-version = {attr = "freeze_core.__version__"}
-
 [tool.setuptools.packages.find]
 namespaces = false
 where = ["src"]
-
-[tool.bumpversion]
-commit = true
-current_version = "0.5.0"
-message = "Bump version: {current_version} → {new_version} [ci skip]"
-parse = """(?x)
-    (?P<major>0|[1-9]\\d*)\\.
-    (?P<minor>0|[1-9]\\d*)\\.
-    (?P<patch>0|[1-9]\\d*)
-    (?:
-        \\.(?P<optional>0|[1-9]\\d*)  # pull request number (optional)
-    )?
-    (?:
-        -                             # dash separator for pre-release section
-        (?P<pre>[a-zA-Z-]+)\\.        # pre-release label
-        (?P<build>0|[1-9]\\d*)        # pre-release version number
-    )?                                # pre-release section is optional
-"""
-serialize = [
-	"{major}.{minor}.{patch}.{optional}-{pre}.{build}",
-	"{major}.{minor}.{patch}-{pre}.{build}",
-	"{major}.{minor}.{patch}"
-]
-sign_tags = true
-tag = true
-tag_name = "{new_version}"
-verbose = true
-
-[[tool.bumpversion.files]]
-filename = "src/freeze_core/__init__.py"
-
-[tool.bumpversion.parts.pre]
-values = ["dev", "final"]
-optional_value = "final"
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
