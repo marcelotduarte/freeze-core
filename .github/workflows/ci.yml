@@ -102,9 +102,9 @@ jobs:
           pattern: freeze-core-wheel-${{ matrix.os }}*
           path: wheelhouse
 
-      - name: Install dependencies to test
+      - name: Install dependencies
         run: |
-          uv pip install --extra tests --upgrade -r pyproject.toml
+          uv pip install -r pyproject.toml --upgrade --group tests
           uv pip install freeze-core -f wheelhouse \
               --no-build --no-deps --no-index --prerelease=allow --reinstall
 
