@@ -30,9 +30,8 @@ IS_CONDA = Path(sys.prefix, "conda-meta").is_dir()
 EXE_SUFFIX = get_config_var("EXE")
 
 SOABI = get_config_var("SOABI")
-if SOABI is None or IS_MINGW:
+if SOABI is None:
     # Python <= 3.12 on Windows
-    # Python 3.12 MSYS2 incorrectly returns only sys.implementation.cache_tag
     platform_nodot = PLATFORM.replace(".", "").replace("-", "_")
     SOABI = f"{sys.implementation.cache_tag}-{platform_nodot}"
 
