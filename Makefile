@@ -76,7 +76,7 @@ release:
 .PHONY: release-dev
 release-dev:
 	git checkout -B release main
-	if (uv version --short | grep -q "\-dev"); then\
+	if (uv version --short | grep -q "\.dev"); then\
 		uv version --bump dev;\
 	else\
 		uv version --bump patch --bump dev=0;\

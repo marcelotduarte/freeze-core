@@ -146,7 +146,7 @@ jobs:
           git config user.email marcelotduarte@users.noreply.github.com
           SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
           VERSION=$(uv version --short)
-          if ($VERSION | grep -q "\-dev"); then
+          if (echo "$VERSION" | grep -q "\.dev"); then
             uv version --no-sync --bump dev=$SOURCE_DATE_EPOCH
           else
             uv version --no-sync --bump patch --bump dev=$SOURCE_DATE_EPOCH

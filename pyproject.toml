@@ -1,8 +1,6 @@
 [build-system]
 requires = [
-    # setuptools 77.0.3+ supports PEP 639
-    # setuptools 78.1.1 fix path traversal vulnerability
-    "setuptools>=78.1.1,<81",
+    "setuptools~=82.0",
     "cx-logging>=3.2 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
@@ -32,7 +30,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "filelock>=3.20.1",
+    "filelock>=3.20.3",
     # Windows
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
     "striprtf>=0.0.26 ;sys_platform == 'win32'",
@@ -60,7 +58,7 @@ dev = [
     "pre-commit==4.5.1",
 ]
 tests = [
-    "coverage==7.13.2",
+    "coverage==7.13.4",
     "pytest==9.0.2",
 ]
 
@@ -96,7 +94,7 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 [[tool.cibuildwheel.overrides]]
 select = "cp3{11,12,13,13t,14,14t}-{win32,win_amd64,win_arm64}"
 before-build = """
-uv pip install "setuptools>=78.1.1,<81" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
+uv pip install "setuptools~=82.0" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
 """
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 
