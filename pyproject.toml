@@ -94,7 +94,7 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 [[tool.cibuildwheel.overrides]]
 select = "cp3{11,12,13,13t,14,14t}-{win32,win_amd64,win_arm64}"
 before-build = """
-uv pip install "setuptools>=78.1.1,<81" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
+uv pip install "setuptools~=82.0" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
 """
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 
