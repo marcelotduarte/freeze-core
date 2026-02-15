@@ -9,6 +9,7 @@ Core dependency for cx_Freeze.
 [![Python](https://img.shields.io/pypi/pyversions/freeze-core)](https://www.python.org/)
 [![Coverage](https://raw.githubusercontent.com/marcelotduarte/freeze-core/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/marcelotduarte/freeze-core/blob/python-coverage-comment-action-data/htmlcov/index.html)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![prek](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/j178/prek/master/docs/assets/badge-v0.json)](https://github.com/j178/prek)
 
 ## Installation
 
@@ -78,7 +79,7 @@ If you don't have make installed, run:
 ```
 python -m pip install --upgrade pip
 pip install -e.[dev,tests]
-pre-commit install --install-hooks --overwrite -t pre-commit
+prek install --install-hooks --overwrite -t pre-commit
 ```
 
 ### Building redistributable binary wheels
