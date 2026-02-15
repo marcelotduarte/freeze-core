@@ -47,7 +47,12 @@ else
         PLATFORM_TAG_MASK="win*"
     fi
 fi
-BUILD_TAG_DEFAULT="$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG"
+ZIP_SAFE=$(grep -m1 "^zip-safe = " pyproject.toml | awk '{print $3}')
+if [ "$ZIP_SAFE" == "true" ]; then
+    BUILD_TAG_DEFAULT=py3-none-any
+else
+    BUILD_TAG_DEFAULT="$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG"
+fi
 
 # Usage
 if [ -n "$1" ] && [ "$1" == "--help" ]; then
@@ -69,7 +74,11 @@ else
 fi
 while [ -n "$1" ]; do
     if [ "$1" == "--all" ]; then
-        BUILD_TAG="cp3*-$PLATFORM_TAG"
+        if [ "$ZIP_SAFE" == "true" ]; then
+            BUILD_TAG="$BUILD_TAG_DEFAULT"
+        else
+            BUILD_TAG="cp3*-$PLATFORM_TAG"
+        fi
     elif [ "$1" == "--install" ]; then
         INSTALL="1"
     else
@@ -84,12 +93,6 @@ if [ "$INSTALL_TOOLS" == "1" ]; then
 fi
 
 # Use of dev tools
-_get_version () {
-    local value
-    value=$(uv version --short)
-    $PYTHON -c "print('$value'.replace('\r','').replace('\n',''), end='')"
-}
-
 _get_dirty () {
     local value
     if which git &>/dev/null; then
@@ -112,6 +115,8 @@ _build_wheel () {
     local args=$*
     if [ "$IS_CONDA" == "1" ] || [ "$IS_MINGW" == "1" ]; then
         $PYTHON -m build -n -x --wheel -o wheelhouse
+    elif [ "$ZIP_SAFE" == "true" ]; then
+        uv build -p "$PY_VERSION$PY_ABI_THREAD" --wheel -o wheelhouse
     elif [[ $PY_PLATFORM == win* ]] && [[ $args == *--only* ]]; then
         uv build -p "$PY_VERSION$PY_ABI_THREAD" --wheel -o wheelhouse
     elif [[ $PY_PLATFORM == macos* ]] && [[ $args == *--only* ]]; then
@@ -129,25 +134,22 @@ _build_wheel () {
 
 echo "::group::Project version"
 NAME=$(grep -m1 "^name = " pyproject.toml | awk -F\" '{print $2}')
+VERSION=$(grep -m1 "^version = " pyproject.toml | awk -F\" '{print $2}')
 NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
-VERSION=$(_get_version)
-if [ -z "$VERSION" ]; then
-    if [ -d src ]; then
-        FILENAME=src/$NORMALIZED_NAME/__init__.py
+if [ -d src ]; then
+    if [ -f "src/$NAME/__init__.py" ]; then
+        NORMALIZED_NAME=$NAME
     else
-        FILENAME=$NAME/__init__.py
+        if ! [ -f "src/$NORMALIZED_NAME/__init__.py" ]; then
+            NAME=$(echo "$NAME" | awk -F- '{print $2}')
+            NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
+        fi
     fi
-    VERSION=$(grep "__version__ = " "$FILENAME" | awk -F\" '{print $2}')
-fi
-if [ -z "$VERSION" ]; then
-    NAME=$(echo "$NAME" | awk -F- '{print $2}')
-    NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
-    if [ -d src ]; then
-        FILENAME=src/$NORMALIZED_NAME/__init__.py
-    else
-        FILENAME=$NAME/__init__.py
+else
+    if ! [ -f "$NAME/__init__.py" ] && ! [ -f "$NORMALIZED_NAME/__init__.py" ]; then
+        NAME=$(echo "$NAME" | awk -F- '{print $2}')
+        NORMALIZED_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
     fi
-    VERSION=$(grep "__version__ = " "$FILENAME" | awk -F\" '{print $2}')
 fi
 if [[ $VERSION == *-* ]]; then
     NORMALIZED_VERSION=$($PYTHON -c "print(''.join('$VERSION'.replace('-','.').rsplit('.',1)), end='')")
@@ -169,7 +171,11 @@ if [ "$DIRTY" != "0" ] || [ -z "$FILEEXISTS" ]; then
 fi
 echo "::group::Build wheel(s)"
 if [ "$BUILD_TAG" == "$BUILD_TAG_DEFAULT" ]; then
-    FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION-$PYTHON_TAG-$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG_MASK"
+    if [ "$ZIP_SAFE" == "true" ]; then
+        FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION-$BUILD_TAG_DEFAULT"
+    else
+        FILEMASK="$NORMALIZED_NAME-$NORMALIZED_VERSION-$PYTHON_TAG-$PYTHON_TAG$PY_ABI_THREAD-$PLATFORM_TAG_MASK"
+    fi
     FILEEXISTS=$(find "wheelhouse/$FILEMASK.whl" 2>/dev/null || echo '')
     if [ "$DIRTY" != "0" ] || [ -z "$FILEEXISTS" ]; then
         _build_wheel --only "$BUILD_TAG_DEFAULT"
@@ -184,11 +190,11 @@ echo "::endgroup::"
 if [ "$INSTALL" == "1" ]; then
     echo "::group::Install $NORMALIZED_NAME $NORMALIZED_VERSION"
     if [[ $PY_PLATFORM == mingw* ]]; then
-        PIP_COMMAND="pip install --force-reinstall"
+        PIP_COMMAND="pip install --break-system-packages --force-reinstall"
     else
         PIP_COMMAND="uv pip install --no-build --prerelease=allow --reinstall"
     fi
     $PIP_COMMAND "$NORMALIZED_NAME==$NORMALIZED_VERSION" -f wheelhouse \
-            --no-deps --no-index
+        --no-deps --no-index
     echo "::endgroup::"
 fi
