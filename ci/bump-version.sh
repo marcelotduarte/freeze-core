@@ -84,6 +84,9 @@ git commit -m "Bump version: ${VERSION} → ${NEW_VERSION} [ci skip]" -a
 git log -1
 if ! [ "$CI" == "true" ]; then
     git push origin "$(git branch --show-current)"
-    git push origin "$(git branch --show-current)" --tags
+    if ! (echo "$NEW_VERSION" | grep -q "\.dev"); then
+        git tag -s "$NEW_VERSION" -m "Bump version: ${NEW_VERSION}"
+        git push origin "$(git branch --show-current)" --tags
+    fi
 fi
 echo "::endgroup::"
