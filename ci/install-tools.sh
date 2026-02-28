@@ -13,6 +13,7 @@ fi
 # Detect environment
 IS_CONDA="0"
 IS_MINGW="0"
+IS_UV="0"
 IS_WINDOWS="0"
 if [ -n "$CONDA_EXE" ]; then
     IS_CONDA="1"
@@ -21,6 +22,7 @@ elif [ -n "$MINGW_PACKAGE_PREFIX" ]; then
 elif which python &>/dev/null; then
     PY_PLATFORM=$(python -c "import sysconfig; print(sysconfig.get_platform(), end='')")
     IS_WINDOWS=$([[ $PY_PLATFORM == win* ]] && echo "1")
+    IS_UV="1"
 else
     echo "error: Python is required."
     exit 1
@@ -128,12 +130,9 @@ else
             env UV_INSTALL_DIR="$INSTALL_DIR" sh
     fi
 
-    # Lief is not available for Python 3.13t and 3.14t
-    PY_VERSION=$(python -c "import sysconfig; print(sysconfig.get_python_version(), end='')")
+    # Lief is not available for Python free-threaded
     PY_ABI_THREAD=$(python -c "import sysconfig; print(sysconfig.get_config_var('abi_thread') or '', end='')")
-    PY_VER_ABI="$PY_VERSION$PY_ABI_THREAD"
-    if [ "$IS_WINDOWS" == "1" ] && \
-       { [ "$PY_VER_ABI" == "3.13t" ] || [ "$PY_VER_ABI" == "3.14t" ]; }; then
+    if [ "$IS_WINDOWS" == "1" ] && [ "$PY_ABI_THREAD" == "t" ]; then
         # Packages to install
         pkgs=()
 
@@ -182,11 +181,18 @@ if [ "$INSTALL_DEV" == "1" ]; then
         PY_VER_ABI="$PY_VERSION$PY_ABI_THREAD"
         while read -r line; do
             name=$(echo "$line" | awk -F '[><=]+' '{ print $1 }')
-            filename=$INSTALL_DIR/$name
-            echo "Create $filename"
-            echo "#!/bin/sh"> "$filename"
-            echo "uvx -p $PY_VER_ABI \"$line\" \$@">> "$filename"
-            chmod +x "$filename"
+            # prek has no dependencies (doesn't bloat the installed packages)
+            if [ "$name" == "prek" ] && [ "$IS_CONDA" == "1" ]; then
+                $CONDA_EXE install -c conda-forge "$name" -S -q -y
+            elif [ "$name" == "prek" ] && [ "$IS_UV" == "1" ]; then
+                uv pip install --upgrade "$name"
+            else
+                filename=$INSTALL_DIR/$name
+                echo "Create $filename"
+                echo "#!/bin/sh"> "$filename"
+                echo "uvx -p $PY_VER_ABI \"$line\" \$@">> "$filename"
+                chmod +x "$filename"
+            fi
         done < requirements-dev.txt
     fi
 fi
