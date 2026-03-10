@@ -55,7 +55,7 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 [dependency-groups]
 dev = [
     "cibuildwheel==3.3.1",
-    "prek==0.3.4",
+    "prek==0.3.5",
 ]
 tests = [
     "coverage==7.13.4",
@@ -84,6 +84,13 @@ archs = "x86_64 aarch64 ppc64le"
 before-build = """
 cd /opt/_internal && tar -xvf static-libs-for-embedding-only.tar.xz
 """
+# keep this setting until cibuildwheel uses the tag 2026.03.09-1 or higher
+# that includes OpenSSL 3.5.x
+manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:latest"
+manylinux-aarch64-image = "quay.io/pypa/manylinux2014_aarch64:latest"
+manylinux-ppc64le-image = "quay.io/pypa/manylinux2014_ppc64le:latest"
+musllinux-x86_64-image = "quay.io/pypa/musllinux_1_2_x86_64:latest"
+musllinux-aarch64-image = "quay.io/pypa/musllinux_1_2_aarch64:latest"
 
 [tool.cibuildwheel.macos]
 archs = "universal2"

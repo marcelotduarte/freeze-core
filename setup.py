@@ -215,12 +215,10 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         When python is compiled with --disable-shared, as is done in manylinux
         and macpython, modules such as math, _struct and zlib, which are
         normally embedded in python, are compiled separately.
-        Also, copies tcl/tk libraries.
         """
         # do not copy libraries in develop mode, Windows, conda, etc
         if self.inplace or IS_MINGW or IS_WINDOWS or IS_CONDA or ENABLE_SHARED:
             return
-        # copy only for manylinux and macpython
         freeze_core_dir = f"{self.build_lib}/freeze_core"
         ext_suffix = get_config_var("EXT_SUFFIX")
         if bool(get_config_var("DESTSHARED")):
@@ -229,7 +227,13 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             self.mkpath(target_path)
             for source in source_path.glob(f"*{ext_suffix}"):
                 self.copy_file(source.as_posix(), target_path)
-        # tcl/tk are detected in /usr/local/lib or /usr/share
+
+    def _copy_tkinter_data(self) -> None:
+        """Copy tcl/tk libraries to freeze_core wheel, on posix systems."""
+        # do not copy libraries in develop mode, Windows, conda, etc
+        if self.inplace or IS_MINGW or IS_WINDOWS or IS_CONDA or ENABLE_SHARED:
+            return
+        freeze_core_dir = f"{self.build_lib}/freeze_core"
         try:
             tkinter = __import__("tkinter")
         except ImportError:
@@ -264,9 +268,28 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 else:
                     self.copy_file(source.as_posix(), target)
 
+    def _copy_ssl_data(self) -> None:
+        """Copy ssl data to freeze_core wheel, on posix systems."""
+        # do not copy libraries in develop mode, Windows, conda, etc
+        if self.inplace or IS_MINGW or IS_WINDOWS or IS_CONDA or ENABLE_SHARED:
+            return
+        freeze_core_dir = f"{self.build_lib}/freeze_core"
+        cert_file = os.environ.get("SSL_CERT_FILE")
+        if cert_file is None:
+            ssl_paths = __import__("ssl").get_default_verify_paths()
+            cert_file = ssl_paths.cafile
+            if cert_file and not os.path.exists(cert_file):
+                cert_file = ssl_paths.openssl_cafile
+        if cert_file and os.path.exists(cert_file):
+            target_path = f"{freeze_core_dir}/share"
+            self.mkpath(target_path)
+            self.copy_file(cert_file, f"{target_path}/certs.pem")
+
     def run(self) -> None:
         """Build extensions in build directory."""
         self._copy_libraries()
+        self._copy_tkinter_data()
+        self._copy_ssl_data()
         super().run()
 
 
