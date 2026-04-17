@@ -12,7 +12,7 @@ all: install
 
 .PHONY: prek
 prek: install
-	@(prek run $(PRE_COMMIT_OPTIONS) || true) | more
+	@(prek run $(PRE_COMMIT_OPTIONS) || true)
 	@prek cache gc -q
 
 .PHONY: clean
