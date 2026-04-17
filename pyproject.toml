@@ -59,7 +59,7 @@ dev = [
 ]
 tests = [
     "coverage>=7.13.0",
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
 ]
 
 [tool.uv.dependency-groups]

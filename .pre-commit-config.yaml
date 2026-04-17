@@ -1,7 +1,3 @@
-ci:
-  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate [ci skip]"
-  skip: [shellcheck]
-
 default_language_version:
   python: python3.12
 
@@ -27,7 +23,7 @@ repos:
     hooks:
       - id: validate-pyproject
         additional_dependencies:
-          - validate-pyproject-schema-store[all]>=2025.11.14
+          - validate-pyproject-schema-store[all]>=2026.4.16
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: d1b833175a5d08a925900115526febd8fe71c98e # frozen: v0.15.11
