@@ -59,5 +59,3 @@ cov: wheel
 	coverage combine --keep --quiet -a $(COV_TMPDIR)/
 	coverage report
 	coverage html --show-contexts
-
-
