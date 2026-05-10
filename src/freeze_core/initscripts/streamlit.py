@@ -7,7 +7,7 @@ import sys
 from importlib import import_module
 from tempfile import TemporaryDirectory
 
-sys.frozen = True
+sys.frozen = True  # ty: ignore[unresolved-attribute]
 
 
 def run(name) -> None:

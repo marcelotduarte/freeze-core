@@ -18,7 +18,7 @@ from sysconfig import get_config_var, get_platform, get_python_version
 
 import setuptools.command.build_ext
 from setuptools import Extension, setup
-from setuptools.errors import LinkError
+from setuptools.errors import CompileError, LinkError
 
 ENABLE_SHARED = bool(get_config_var("Py_ENABLE_SHARED"))
 PLATFORM = get_platform()
@@ -190,14 +190,20 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         library_dir.mkdir(parents=True, exist_ok=True)
         # Use gendef and dlltool to generate the library (.a and .delay.a)
         dll_path = self._get_dll_path(name)
-        gendef_exe = Path(which("gendef"))
+        gendef_exe = which("gendef")
+        if gendef_exe is None:
+            msg = "Unable to find 'gendef' on PATH"
+            raise CompileError(msg)
+        dlltool_exe = which("dlltool")
+        if dlltool_exe is None:
+            msg = "Unable to find 'dlltool' on PATH"
+            raise CompileError(msg)
         def_data = check_output([gendef_exe, "-", dll_path])  # noqa: S603
         def_name = library_dir / f"{name}.def"
         def_name.write_bytes(def_data)
         lib_path = library_dir / f"lib{name}.a"
         library = f"{name}.delay"
         dlb_path = library_dir / f"lib{library}.a"
-        dlltool_exe = gendef_exe.parent / "dlltool.exe"
         dlltool = [dlltool_exe, "-d", def_name, "-D", dll_path, "-l", lib_path]
         output_delaylib_args = ["-y", dlb_path]
         try:

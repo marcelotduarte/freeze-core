@@ -30,6 +30,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
+    "setuptools>=78.1.1,<83.0",
     "filelock>=3.20.3",
     # Windows
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
@@ -60,6 +61,9 @@ dev = [
 tests = [
     "coverage>=7.13.0",
     "pytest>=9.0.3",
+    # dependencies already included on Windows
+    "cabarchive>=0.2.4 ;sys_platform != 'win32'",
+    "striprtf>=0.0.26 ;sys_platform != 'win32'",
 ]
 
 [tool.uv.dependency-groups]
@@ -232,3 +236,8 @@ ignore-variadic-names = true
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 50
+
+[tool.ty.src]
+exclude = [
+     "src/freeze_core/initscripts/*zipimport*.py",
+]

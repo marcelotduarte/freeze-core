@@ -8,14 +8,30 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from typing import TYPE_CHECKING, cast
 
-sys.frozen = True
+if TYPE_CHECKING:
+    from importlib.machinery import SourcelessFileLoader
+
+sys.frozen = True  # ty: ignore[unresolved-attribute]
+
+ERROR_MSG = "Error: main script {name!r} {msg}"
 
 
 def run(name) -> None:
     """Execute the main script of the frozen application."""
     spec = importlib.util.find_spec(name)
-    code = spec.loader.get_code(name)
+    if spec is None:
+        msg = ERROR_MSG.format(name=name, msg="not found")
+        raise RuntimeError(msg)
+    loader = cast("SourcelessFileLoader", spec.loader)
+    if loader is None:
+        msg = ERROR_MSG.format(name=name, msg="loader error")
+        raise RuntimeError(msg)
+    code = loader.get_code(name)
+    if code is None:
+        msg = ERROR_MSG.format(name=name, msg="code error")
+        raise RuntimeError(msg)
     main_module = sys.modules["__main__"]
     main_globals = main_module.__dict__
     main_globals.update(
