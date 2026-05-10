@@ -1,13 +1,9 @@
 """Compiled functions in freeze_core.util."""
 
 from pathlib import Path
+from typing import NewType
 
-try:
-    from typing import TypeAlias  # 3.10+
-except ImportError:
-    from typing import Any as TypeAlias
-
-HANDLE: TypeAlias = ...
+HANDLE = NewType("HANDLE", int)
 
 class BindError(Exception):
     """BindError Exception."""

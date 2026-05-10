@@ -13,6 +13,12 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from importlib.machinery import SourcelessFileLoader
+
+ERROR_MSG = "Error: main script {name!r} {msg}"
 
 paths = os.environ.get("LD_LIBRARY_PATH", "").split(os.pathsep)
 
@@ -21,14 +27,24 @@ if sys.prefix not in paths:
     os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(paths)
     os.execv(sys.executable, sys.argv)  # noqa: S606
 
-sys.frozen = True
+sys.frozen = True  # ty: ignore[unresolved-attribute]
 sys.path = sys.path[:4]
 
 
 def run(name) -> None:
     """Execute the main script of the frozen application."""
     spec = importlib.util.find_spec(name)
-    code = spec.loader.get_code(name)
+    if spec is None:
+        msg = ERROR_MSG.format(name=name, msg="not found")
+        raise RuntimeError(msg)
+    loader = cast("SourcelessFileLoader", spec.loader)
+    if loader is None:
+        msg = ERROR_MSG.format(name=name, msg="loader error")
+        raise RuntimeError(msg)
+    code = loader.get_code(name)
+    if code is None:
+        msg = ERROR_MSG.format(name=name, msg="code error")
+        raise RuntimeError(msg)
     main_module = sys.modules["__main__"]
     main_globals = main_module.__dict__
     main_globals.update(

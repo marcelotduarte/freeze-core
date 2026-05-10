@@ -16,7 +16,7 @@ from _frozen_importlib_external import (
     PathFinder,
 )
 
-import BUILD_CONSTANTS
+import BUILD_CONSTANTS  # ty: ignore[unresolved-import]
 
 STRINGREPLACE = list(
     string.whitespace + string.punctuation.replace(".", "").replace("_", "")
@@ -57,7 +57,7 @@ class ExtensionFinder(PathFinder):
         return None
 
 
-def get_name(executable) -> str:
+def get_name(executable: str) -> str:
     """Get the module basename to search for init and main scripts."""
     name = os.path.normcase(os.path.basename(executable))
     if sys.platform.startswith("win"):
@@ -79,7 +79,7 @@ def init() -> None:
     # enable ExtensionFinder only if uses a zip file
     for path in sys.path:
         if path.endswith(".zip"):
-            sys.meta_path.append(ExtensionFinder)
+            sys.meta_path.append(ExtensionFinder)  # ty: ignore[invalid-argument-type]
             break
 
     if sys.platform.startswith("win"):

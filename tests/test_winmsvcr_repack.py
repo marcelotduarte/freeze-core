@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from freeze_core._compat import IS_LINUX, IS_MINGW, IS_UCRT, IS_WINDOWS
+from freeze_core._compat import IS_LINUX, IS_UCRT
 from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
 from freeze_core.winmsvcr_repack import copy_msvcr_files, main_test
 
@@ -29,15 +29,13 @@ TEST_ENABLED = IS_UCRT or (IS_LINUX and sys.version_info[:2] == (3, 12))
         ("17", "win32", False),
         ("17", "win-amd64", True),  # just one no_cache is enough
         ("17", "win-arm64", False),
+        (17, "win-arm64", False),  # one test using int
     ],
 )
 def test_versions(
-    tmp_package, version: int, platform: str, no_cache: bool
+    tmp_package, version: int | str, platform: str, no_cache: bool
 ) -> None:
     """Test the downloads of all versions of msvcr."""
-    if not (IS_MINGW or IS_WINDOWS):
-        tmp_package.install(["cabarchive", "striprtf"])
-
     copy_msvcr_files(tmp_package.path, platform, version, no_cache=no_cache)
     expected = [*MSVC_FILES]
     if version == "15":
@@ -54,19 +52,19 @@ def test_versions(
 @pytest.mark.parametrize(
     ("version", "platform", "expected_exception", "expected_match"),
     [
-        (17, "win-amd64", RuntimeError, "Version is not expected"),
         ("18", "win-amd64", RuntimeError, "Version is not expected"),
         ("17", "", RuntimeError, "Architecture not supported"),
         ("17", "win64", RuntimeError, "Architecture not supported"),
     ],
 )
 def test_invalid(
-    tmp_package, version, platform, expected_exception, expected_match
+    tmp_package,
+    version: str,
+    platform: str,
+    expected_exception,
+    expected_match: str,
 ) -> None:
     """Test invalid values to use with copy_msvcr_files function."""
-    if not (IS_MINGW or IS_WINDOWS):
-        tmp_package.install(["cabarchive", "striprtf"])
-
     with pytest.raises(expected_exception, match=expected_match):
         copy_msvcr_files(tmp_package.path, platform, version)
 
@@ -74,9 +72,6 @@ def test_invalid(
 @pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
 def test_repack_main(tmp_package) -> None:
     """Test the freeze_core.winmsvcr_repack __main_ entry point with args."""
-    if not (IS_MINGW or IS_WINDOWS):
-        tmp_package.install(["cabarchive", "striprtf"])
-
     main_test(
         args=[
             f"--target-dir={tmp_package.path}",
@@ -95,9 +90,6 @@ def test_repack_main(tmp_package) -> None:
 @pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
 def test_repack_main_no_option(tmp_package) -> None:
     """Test the freeze_core.winmsvcr_repack 'main' entry point without args."""
-    if not (IS_MINGW or IS_WINDOWS):
-        tmp_package.install(["cabarchive", "striprtf"])
-
     main_test(args=[])
     names = [
         file.name.lower()

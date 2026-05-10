@@ -93,10 +93,15 @@ def unpack_cab(cabfile: Path, tmpdir: Path) -> None:
 
 def decode_manifest(directory: Path) -> dict[str, str]:
     # The first CAB file contains a manifest in the file "0" in XML format.
-    dom = xml.dom.minidom.parse(os.fspath(directory / "0"))  # noqa: S318
+    with directory.joinpath("0").open("rb") as manifest:
+        dom = xml.dom.minidom.parse(manifest)  # noqa: S318
+    element = dom.documentElement
+    if element is None:
+        msg = "Found no root in the manifest"
+        raise RuntimeError(msg)
 
     # The version is contained in Registration.Version
-    registration = dom.documentElement.getElementsByTagName("Registration")
+    registration = element.getElementsByTagName("Registration")
     version = registration[0].attributes["Version"].value
     line = f"MSVC Runtimes version: {version}"
     print("*" * len(line))
@@ -107,7 +112,7 @@ def decode_manifest(directory: Path) -> dict[str, str]:
     # The other files have generic names such as a0, a1, etc.  The manifest
     # gives us their true names.  The FilePath contains the a0 type filename,
     # the SourcePath the true filename.
-    payloads = dom.documentElement.getElementsByTagName("Payload")
+    payloads = element.getElementsByTagName("Payload")
 
     # Find the licence file.
     licences = [
@@ -211,7 +216,7 @@ def unpack_exe(exe_filename: Path, unpack_dir: Path) -> Generator[Path]:
 
 
 def get_msvcr_files(
-    version: str | None = None,
+    version: int | str | None = None,
     target_platform: str | None = None,
     no_cache: bool = False,
 ) -> Generator[Path]:
@@ -227,6 +232,7 @@ def get_msvcr_files(
         raise RuntimeError(msg)
     if version is None:
         version = max(VC_VERSION_TABLE.keys())
+    version = str(version)
     if version not in VC_VERSION_TABLE:
         msg = f"Version is not expected: {version!r}"
         raise RuntimeError(msg)
@@ -262,7 +268,7 @@ def get_msvcr_files(
 def copy_msvcr_files(
     target_dir: Path | str,
     target_platform: str | None = None,
-    version: str | None = None,
+    version: int | str | None = None,
     dry_run: bool = False,
     no_cache: bool = False,
 ) -> None:

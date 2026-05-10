@@ -11,7 +11,7 @@ from __future__ import annotations
 import sys
 
 if not hasattr(sys, "frozen"):
-    sys.frozen = True
+    sys.frozen = True  # ty: ignore[unresolved-attribute]
     sys.path = sys.path[:4]
 
 
