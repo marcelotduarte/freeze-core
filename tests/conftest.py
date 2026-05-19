@@ -16,7 +16,7 @@ from contextlib import redirect_stdout, suppress
 from pathlib import Path
 from shutil import copytree, ignore_patterns, rmtree, which
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 import pytest
 from filelock import BaseFileLock, FileLock
@@ -29,7 +29,10 @@ else:
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from os import PathLike
     from types import GeneratorType
+
+    StrPath: TypeAlias = str | PathLike[str]
 
 # copied from cx_Freeze._compat
 PLATFORM = sysconfig.get_platform()
@@ -150,13 +153,14 @@ class TempPackage:
     def freeze(
         self,
         command: Sequence[str] | Path | None = None,
-        cwd: str | Path | None = None,
+        cwd: StrPath | None = None,
         env: dict[str, str] | None = None,
         timeout: float | None = None,
     ) -> pytest.RunResult:
-        """Execute the command to freeze the current test sample, which can be
-        specified in 'command', or read the command contained in the file named
-        'command', or detect the default command to use.
+        """Execute the command to freeze the current test sample.
+
+        The command can be specified in 'command' argument, or read from the
+        file named 'command', or a default command is used.
         """
         __tracebackhide__ = True
         if command is None:
@@ -187,10 +191,10 @@ class TempPackage:
         with self._lock:
             return self.run(command, cwd=cwd, env=env, timeout=timeout)
 
-    def run(
+    def run(  # noqa: PLR0912
         self,
         command: Sequence | Path,
-        cwd: str | Path | None = None,
+        cwd: StrPath | None = None,
         env: dict[str, str] | None = None,
         timeout: float | None = None,
         *,
@@ -225,7 +229,7 @@ class TempPackage:
             command[0] = os.fspath(self.python)
         cwd = os.fspath(self.path if cwd is None else cwd)
         try:
-            process = subprocess.run(
+            process = subprocess.run(  # noqa: S603
                 command,
                 capture_output=True,
                 check=False,
@@ -253,7 +257,7 @@ class TempPackage:
             returncode, stdout.splitlines(), stderr.splitlines(), 0
         )
 
-    def install(
+    def install(  # noqa: PLR0912
         self,
         packages: str | list[str],
         *,
@@ -307,8 +311,9 @@ class TempPackage:
             )
 
     def install_dependencies(self, pyproject: Path | None = None) -> None:
-        """Install dependencies for the test, as specified in the
-        pyproject.toml.
+        """Install dependencies for the test.
+
+        The default is to read from pyproject.toml.
         """
         self.install(self._get_dependencies(pyproject))
 
@@ -323,7 +328,7 @@ class TempPackage:
         return []
 
     def _get_installed_packages(
-        self, python: str | Path | None = None
+        self, python: StrPath | None = None
     ) -> list[dict[str, str]]:
         """Get installed packages."""
         if python is None:
@@ -374,13 +379,13 @@ class TempPackage:
             raise ModuleNotFoundError(packages) from None
         return result
 
-    def _install_pip(
+    def _install_pip(  # noqa: PLR0912
         self,
         packages: list[str],
         *,
         backend: str | None = None,
         binary: bool = True,
-        index: bool | str | Path | None = None,
+        index: bool | StrPath | None = None,
         isolated: bool = False,
     ) -> pytest.RunResult:
         # "uv pip install --prefix" install the package in the new prefix as a
@@ -505,7 +510,7 @@ class TempPackageVenv(TempPackage):
     def freeze(
         self,
         command: Sequence[str] | Path | None = None,
-        cwd: str | Path | None = None,
+        cwd: StrPath | None = None,
         env: dict[str, str] | None = None,
         timeout: float | None = None,
     ) -> pytest.RunResult:
@@ -649,8 +654,9 @@ def _tmp_package_venv(
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
 ) -> GeneratorType[TempPackage]:
-    """Create package in temporary path, based on source (or sample),
-    using a virtual environment.
+    """Create package in temporary path, based on source (or sample).
+
+    Using a virtual environment.
     """
     tmp_pkg = TempPackageVenv(request, tmp_path_factory, monkeypatch)
     yield tmp_pkg

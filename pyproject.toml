@@ -56,7 +56,7 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 [dependency-groups]
 dev = [
     "cibuildwheel>=3.4.1",
-    "prek>=0.3.8,<0.4.0",
+    "prek>=0.4.0,<0.5.0",
 ]
 tests = [
     "coverage>=7.13.0",
@@ -160,7 +160,9 @@ line-length = 79
 [tool.ruff.lint]
 select = [
     "A",    # flake8-builtins
-    "ANN2", # flake8-annotations - missing return type
+    "ANN001",  # flake8-annotations - missing-type-function-argument
+    "ANN201",  # flake8-annotations - missing-return-type-undocumented-public-function
+    "ANN202",  # flake8-annotations - missing-return-type-private-function
     "ARG",  # flake8-unused-arguments
     "B",    # flake8-bugbear
     "BLE",  # flake8-blind-except
@@ -206,22 +208,14 @@ ignore = [
     "D107",     # Missing docstring in `__init__`
     "D203",     # conflict with D211
     "D213",     # conflict with D212
-    # should be revised in future - last revised using ruff 0.14.0
-    "PYI021",   # Docstrings should not be included in stubs
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "src/freeze_core/initscripts/*" = [
     "S102",     # Use of `exec` detected
 ]
-"src/freeze_core/initscripts/__startup__.py" = [
-    "SIM105",   # suppressible-exception
-]
 "tests/conftest.py" = [
     "D102",     # Missing docstring in public method
-    "D205",     # 1 blank line required between summary line and description
-    "PLR0912",  # too-many-branches
-    "S603",     # `subprocess` call: check for execution of untrusted input
 ]
 "tests/*" = [
     "S101",     # Use of `assert` detected

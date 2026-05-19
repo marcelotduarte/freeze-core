@@ -31,7 +31,7 @@ sys.frozen = True  # ty: ignore[unresolved-attribute]
 sys.path = sys.path[:4]
 
 
-def run(name) -> None:
+def run(name: str) -> None:
     """Execute the main script of the frozen application."""
     spec = importlib.util.find_spec(name)
     if spec is None:

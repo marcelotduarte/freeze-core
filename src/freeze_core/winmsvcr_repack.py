@@ -28,7 +28,7 @@ from filelock import FileLock
 from freeze_core._compat import PLATFORM
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Sequence
 
 __all__ = ["copy_msvcr_files", "get_msvcr_files"]
 
@@ -136,7 +136,7 @@ def decode_manifest(directory: Path) -> dict[str, str]:
     # "packages\vcRuntimeMinimum_amd64\cab1.cab",
     # "packages\VC_Runtime_arm64\cab1.cab",
     # "packages\vcRuntimeMinimum_x86\cab1.cab" or similar
-    def find_cab(r, v) -> bool:
+    def find_cab(r: str, v: str) -> bool:
         return r in v and v.endswith(".cab")
 
     runtimes = [
@@ -280,7 +280,7 @@ def copy_msvcr_files(
             shutil.copy2(file, target_dir / file.name)
 
 
-def main_test(args=None) -> None:
+def main_test(args: Sequence[str] | None = None) -> None:
     """Command line test."""
     parser = argparse.ArgumentParser(
         description="Extract MSVC runtime package"
@@ -309,14 +309,14 @@ def main_test(args=None) -> None:
         help="Don't use the cached runtime",
         action="store_true",
     )
-    args = parser.parse_args(args)
+    parsed_args = parser.parse_args(args)
 
     copy_msvcr_files(
-        args.target_dir,
-        args.target_platform,
-        args.version,
-        args.dry_run,
-        args.no_cache,
+        parsed_args.target_dir,
+        parsed_args.target_platform,
+        parsed_args.version,
+        parsed_args.dry_run,
+        parsed_args.no_cache,
     )
 
 

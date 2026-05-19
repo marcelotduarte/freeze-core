@@ -29,9 +29,9 @@ class ExtensionFinder(PathFinder):
     @classmethod
     def find_spec(
         cls,
-        fullname,
-        path=None,
-        target=None,  # noqa: ARG003
+        fullname: str,
+        path=None,  # noqa: ANN001 # Sequence[str]
+        target=None,  # noqa: ARG003,ANN001 # ModuleType
     ) -> ModuleSpec | None:
         """Finder for extension modules only.
 
@@ -95,7 +95,7 @@ def init() -> None:
         # add to dll search path (or to path)
         env_path = list(map(os.path.normpath, os.get_exec_path()))
         for directory in search_path:
-            try:
+            try:  # noqa: SIM105
                 os.add_dll_directory(directory)
             except OSError:
                 pass
