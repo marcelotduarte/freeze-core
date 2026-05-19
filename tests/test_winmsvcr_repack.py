@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,6 +11,8 @@ from freeze_core._compat import IS_LINUX, IS_UCRT
 from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
 from freeze_core.winmsvcr_repack import copy_msvcr_files, main_test
 
+if TYPE_CHECKING:
+    from .conftest import TempPackage
 # This test is really necessary on Windows, but it runs in other environments,
 # so I let it be tested on Python 3.12 Linux, which is used on Ubuntu 24.04.
 
@@ -33,7 +36,7 @@ TEST_ENABLED = IS_UCRT or (IS_LINUX and sys.version_info[:2] == (3, 12))
     ],
 )
 def test_versions(
-    tmp_package, version: int | str, platform: str, no_cache: bool
+    tmp_package: TempPackage, version: int | str, platform: str, no_cache: bool
 ) -> None:
     """Test the downloads of all versions of msvcr."""
     copy_msvcr_files(tmp_package.path, platform, version, no_cache=no_cache)
@@ -58,10 +61,10 @@ def test_versions(
     ],
 )
 def test_invalid(
-    tmp_package,
+    tmp_package: TempPackage,
     version: str,
     platform: str,
-    expected_exception,
+    expected_exception: type[BaseException],
     expected_match: str,
 ) -> None:
     """Test invalid values to use with copy_msvcr_files function."""
@@ -70,7 +73,7 @@ def test_invalid(
 
 
 @pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
-def test_repack_main(tmp_package) -> None:
+def test_repack_main(tmp_package: TempPackage) -> None:
     """Test the freeze_core.winmsvcr_repack __main_ entry point with args."""
     main_test(
         args=[
@@ -88,7 +91,7 @@ def test_repack_main(tmp_package) -> None:
 
 
 @pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")
-def test_repack_main_no_option(tmp_package) -> None:
+def test_repack_main_no_option(tmp_package: TempPackage) -> None:
     """Test the freeze_core.winmsvcr_repack 'main' entry point without args."""
     main_test(args=[])
     names = [

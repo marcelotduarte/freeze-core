@@ -39,7 +39,7 @@ if SOABI is None:
 class BuildBases(setuptools.command.build_ext.build_ext):
     """Build C bases and extension."""
 
-    def build_extension(self, ext) -> None:  # noqa: PLR0912, PLR0915
+    def build_extension(self, ext: Extension) -> None:  # noqa: PLR0912, PLR0915
         """Build the extension."""
         ext.include_dirs.append("src/freeze_core/include")
         if not ext.name.split(".")[1].startswith(("bases", "legacy")):
@@ -153,7 +153,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             if link_error is not None:
                 raise LinkError from link_error
 
-    def get_ext_filename(self, fullname) -> str:
+    def get_ext_filename(self, fullname: str) -> str:
         """Convert the name of an extension into the name of the file.
 
         Examples of returned names:
