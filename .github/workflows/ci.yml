@@ -59,13 +59,15 @@ jobs:
       - name: Install dependencies
         run: ci/install-tools.sh --dev --tests
 
-      - uses: ty check
+      - name: Type check
+        run: ty check
 
   build_wheel:
     name: Build wheels
     uses: ./.github/workflows/build.yml
     needs:
       - pre_commit
+      - type_check
 
   testpypi:
     name: Publish package to TestPyPI
