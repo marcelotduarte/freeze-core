@@ -93,7 +93,9 @@ def init() -> None:
             entry for entry in sys.path if os.path.isdir(entry)
         ]
         # add to dll search path (or to path)
-        env_path = list(map(os.path.normpath, os.get_exec_path()))
+        env_path: list[str] = [
+            os.path.normpath(entry) for entry in os.get_exec_path()
+        ]
         for directory in search_path:
             try:  # noqa: SIM105
                 os.add_dll_directory(directory)
