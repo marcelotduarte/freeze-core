@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: Free Threading :: 2 - Beta",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -54,7 +55,7 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 
 [dependency-groups]
 dev = [
-    "cibuildwheel>=3.4.1",
+    "cibuildwheel>=4.0.0rc1",
     "prek>=0.4.0,<0.5.0",
     "ty>=0.0.39",
 ]
