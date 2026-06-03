@@ -145,6 +145,8 @@ jobs:
         run: ./ci/bump-version.sh build-dev
 
       - name: Build sdist and wheels
+        env:
+          CIBW_ENABLE: cpython-prerelease
         run: ./ci/build-wheel.sh "${{ matrix.tag }}"
 
       - name: Upload the artifact
