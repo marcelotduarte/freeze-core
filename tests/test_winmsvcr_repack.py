@@ -33,9 +33,6 @@ TEST_ENABLED = IS_UCRT or (IS_LINUX and sys.version_info[:2] == (3, 12))
         ("17", "win-amd64", True),  # just one no_cache is enough
         ("17", "win-arm64", False),
         (17, "win-arm64", False),  # one test using int
-        ("18", "win32", False),
-        ("18", "win-amd64", False),
-        ("18", "win-arm64", False),
     ],
 )
 def test_versions(
@@ -58,9 +55,9 @@ def test_versions(
 @pytest.mark.parametrize(
     ("version", "platform", "expected_exception", "expected_match"),
     [
+        ("18", "win-amd64", RuntimeError, "Version is not expected"),
         ("17", "", RuntimeError, "Architecture not supported"),
         ("17", "win64", RuntimeError, "Architecture not supported"),
-        ("19", "win-amd64", RuntimeError, "Version is not expected"),
     ],
 )
 def test_invalid(
