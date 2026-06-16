@@ -47,6 +47,7 @@ tests: wheel
 	./ci/install-tools.sh --tests
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
+	cp -a wheelhouse $(COV_TMPDIR)/
 	cd $(COV_TMPDIR) && pytest -nauto -v || true
 
 .PHONY: cov
@@ -55,6 +56,7 @@ cov: wheel
 	@rm -rf build/coverage_html_report
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
+	cp -a wheelhouse $(COV_TMPDIR)/
 	cd $(COV_TMPDIR) && coverage run || true
 	coverage combine --keep --quiet -a $(COV_TMPDIR)/
 	coverage report
