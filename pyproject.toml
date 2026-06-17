@@ -216,6 +216,9 @@ ignore = [
 ]
 "tests/conftest.py" = [
     "D102",     # Missing docstring in public method
+    "PLR0912",  # Too many branches
+    "PLR0913",  # Too many arguments in function definition
+    "S603",
 ]
 "tests/*" = [
     "S101",     # Use of `assert` detected
