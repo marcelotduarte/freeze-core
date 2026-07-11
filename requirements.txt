@@ -1,4 +1,4 @@
-setuptools>=78.1.1,<83.0
+setuptools>=78.1.1,<84.0
 filelock>=3.20.3
 cabarchive>=0.2.4 ;sys_platform == 'win32'
 striprtf>=0.0.26 ;sys_platform == 'win32'

@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools~=82.0",
+    "setuptools~=83.0",
     "cx-logging>=3.2 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
@@ -29,7 +29,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "setuptools>=78.1.1,<83.0",
+    "setuptools>=78.1.1,<84.0",
     "filelock>=3.20.3",
     # Windows
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
@@ -54,13 +54,13 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 
 [dependency-groups]
 dev = [
-    "cibuildwheel>=4.0.0",
-    "prek>=0.4.0,<0.5.0",
-    "ty>=0.0.48",
+    "cibuildwheel>=4.1.0",
+    "prek>=0.4.9,<0.5.0",
+    "ty>=0.0.58",
 ]
 tests = [
     "coverage>=7.13.0",
-    "pytest>=9.0.3",
+    "pytest>=9.0.3,<9.2.0",
     # dependencies already included on Windows
     "cabarchive>=0.2.4 ;sys_platform != 'win32'",
     "striprtf>=0.0.26 ;sys_platform != 'win32'",
@@ -104,7 +104,7 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 [[tool.cibuildwheel.overrides]]
 select = "cp3{11,12,13,14,14t}-{win32,win_amd64,win_arm64}"
 before-build = """
-uv pip install "setuptools~=82.0" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
+uv pip install "setuptools~=83.0" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
 """
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 
