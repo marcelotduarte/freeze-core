@@ -102,10 +102,19 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 """
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3{11,12,13,14,14t}-{win32,win_amd64,win_arm64}"
-before-build = """
-uv pip install "setuptools~=83.0" cx-logging --extra-index-url https://marcelotduarte.github.io/packages/
-"""
+select = "cp3{14,14t,15,15t}-{win32,win_amd64}"
+before-build = [
+    "uv pip install setuptools~=83.0",
+    "uv pip install --index-url https://test.pypi.org/simple/ cx-logging",
+]
+build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
+
+[[tool.cibuildwheel.overrides]]
+select = "cp3{11,12,13,14,14t,15,15t}-win_arm64"
+before-build = [
+    "uv pip install setuptools~=83.0",
+    "uv pip install --index-url https://test.pypi.org/simple/ cx-logging",
+]
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
 
 [tool.coverage.html]
