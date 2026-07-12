@@ -82,6 +82,7 @@ where = ["src"]
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
 build-verbosity = 1
+enable = "cpython-prerelease"
 
 [tool.cibuildwheel.linux]
 archs = "x86_64 aarch64 ppc64le"
