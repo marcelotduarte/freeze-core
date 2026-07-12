@@ -31,6 +31,8 @@ static char* g_argv0;
 #pragma warning(disable : 4996)
 #endif
 
+extern const struct _frozen CoreFrozenModules[];
+
 //-----------------------------------------------------------------------------
 // get_executable_name()
 //   Get the executable name given the value of argv[0]. First, if a path
@@ -264,6 +266,9 @@ static int InitializePython(int argc, wchar_t** argv)
     char *executable, *lib_dir, *sys_path;
 #endif
     wchar_t *wexecutable, *wpath;
+
+    // Load frozen modules
+    PyImport_FrozenModules = CoreFrozenModules;
 
     // determine executable name, lib directory and sys.path
     if ((executable = get_executable_name()) == NULL)

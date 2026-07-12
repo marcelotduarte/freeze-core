@@ -26,7 +26,7 @@ repos:
           - validate-pyproject-schema-store[all]>=2026.06.14
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 3b3f7c3f57fe9925356faf5fe6230835138be230 # frozen: v0.15.17
+    rev: 01a675ea018f2fb714478a5ffb83fcea8374bb06 # frozen: v0.15.21
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes", "--unsafe-fixes"]
@@ -52,7 +52,7 @@ repos:
       - id: gitleaks
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: 06507ab9500d4a9919b5ebd76d9d5b7074f15c1f # frozen: v3.8.4
+    rev: 9337a74165b178ae2c766f60bee7252a0f06f3e8 # frozen: v3.9.5
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -63,7 +63,7 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: d69b804e5f355d9ec0d5b3c9bcfb4e694dc3d412 # frozen: v0.0.49
+    rev: eae6718df64ccb8f2bf764300cd24acccba5c43c # frozen: v0.0.58
     hooks:
       - id: ty
         args: [--no-sync]

@@ -23,6 +23,7 @@
 #endif
 
 extern int FatalScriptError(void);
+extern const struct _frozen CoreFrozenModules[];
 
 //-----------------------------------------------------------------------------
 // get_program_name()
@@ -272,6 +273,9 @@ static PyStatus get_library_zip(char** ptr_str, const char* platlib)
 static PyStatus PreInitializePython(void)
 {
     PyPreConfig preconfig;
+
+    // Load frozen modules
+    PyImport_FrozenModules = CoreFrozenModules;
 
     // pre config - set utf8 mode
     PyPreConfig_InitIsolatedConfig(&preconfig);

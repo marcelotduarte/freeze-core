@@ -1,0 +1,149 @@
+"""Freeze modules and regenerate C code for them.
+
+This tool was based on:
+    https://github.com/python/cpython/blob/main/Tools/freeze/regen_frozen.py
+
+More references:
+    https://github.com/python/cpython/blob/main/Python/frozen.c
+    https://github.com/python/cpython/blob/main/Tools/build/freeze_modules.py
+"""
+
+from __future__ import annotations
+
+import _imp
+import json
+import marshal
+import sys
+from pathlib import Path
+from sysconfig import get_config_var, get_platform
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from io import TextIOWrapper
+
+PLATFORM = get_platform()
+SOABI = get_config_var("SOABI")
+if SOABI is None:
+    # Python <= 3.12 on Windows
+    platform_nodot = PLATFORM.replace(".", "").replace("-", "_")
+    SOABI = f"{sys.implementation.cache_tag}-{platform_nodot}"
+THIS = Path(__file__)
+
+FROZEN_SOURCE: list[tuple[str, str | None]] = [
+    ("__startup__", "src/freeze_core/initscripts/__startup__.py"),
+    ("abc", None),  # 3.11+
+    ("codecs", None),  # 3.11+
+    ("encodings", None),  # 3.15+ partially frozen
+    ("io", None),  # 3.11+
+    ("_collections_abc", None),  # 3.11+
+    ("genericpath", None),  # 3.11+
+    ("ntpath", None),  # 3.11+
+    ("posixpath", None),  # 3.11+
+    ("os", None),  # 3.11+
+    ("stat", None),  # 3.11+
+    ("string", None),  # for __startup__
+]
+frozen_module_names = cast(
+    "list[str]",
+    _imp._frozen_module_names(),  # ty: ignore # noqa: SLF001
+)
+
+
+def get_module_code(filename: Path) -> bytes:
+    """Compile 'filename' and return a marshalled byte code."""
+    src = filename.read_bytes()
+    co = compile(src, filename.as_posix(), "exec")
+    return marshal.dumps(co)
+
+
+def gen_c_code(name: str, src: Path, fp: TextIOWrapper) -> tuple[str, str]:
+    """Generate C code for the source module, write it to 'fp'."""
+    co_bytes = get_module_code(src)
+
+    symbol = f"M_{name.replace('.', '_')}"
+    fp.write(f"static unsigned char {symbol}[] = {{")
+    bytes_per_row = 15
+    for i, opcode in enumerate(co_bytes):
+        if (i % bytes_per_row) == 0:
+            # start a new row
+            fp.write("\n    ")
+        fp.write(f"{opcode:d}, ")
+    fp.write("\n};\n\n")
+    return name, symbol
+
+
+def gen_symbols(fp: TextIOWrapper) -> list[tuple[str, str, bool]]:
+    """Generate C code for all required modules, write it to 'fp'."""
+    table = []
+    todo = FROZEN_SOURCE[:]
+    while todo:
+        name, source = todo.pop()
+        if source is None:
+            try:
+                module = __import__(name)
+            except ImportError:
+                continue
+            if not module.__file__:
+                continue
+            src = Path(module.__file__)
+        else:
+            src = Path(source)
+        if src.stem == "__init__":
+            is_package = True
+            for file in src.parent.iterdir():
+                if file.suffix == ".py" and file.stem != "__init__":
+                    todo.append((f"{name}.{file.stem}", file.as_posix()))
+                elif file.is_dir() and file.name != "__pycache__":
+                    todo.append((f"{name}.{file.stem}", None))
+        else:
+            is_package = False
+        if name in frozen_module_names:
+            continue
+        _name, symbol = gen_c_code(name, src, fp)
+        table.append((name, symbol, is_package))
+    return table
+
+
+def gen_source_file(filename: Path) -> Path:
+    """Generate C code for all required modules, write it to 'filename'.
+
+    A JSON file containing all built-in and frozen modules is also
+    generated.
+    """
+    with filename.open("w") as fp:
+        fp.write(f"/* Generated with {THIS.name} */\n\n")
+        fp.write("#define PY_SSIZE_T_CLEAN\n")
+        fp.write("#include <Python.h>\n\n")
+
+        table = gen_symbols(fp)
+
+        fp.write("const struct _frozen CoreFrozenModules[] = {\n")
+        for name, symbol, is_package in table:
+            fp.write(f'    {{"{name}", {symbol}, (int)sizeof({symbol}), ')
+            fp.write(f"{1 if is_package else 0}}},\n")
+        fp.write("    {0, 0, 0},\n")  # sentinel
+        fp.write("};\n")
+
+    internal = {"__version__": sys.version}
+    for name in sys.builtin_module_names:
+        internal[name] = "built-in"
+    for name in frozen_module_names:
+        if name.startswith(("__hello_", "__phello_", "runpy", "site")):
+            continue
+        internal[name] = "frozen"
+    for name, _symbol, _is_package in sorted(table):
+        internal[name] = "core"
+
+    filename2 = filename.with_suffix(".json")
+    with filename2.open("w") as fp:
+        json.dump(internal, fp, indent=1)
+
+    return filename
+
+
+if __name__ == "__main__":
+    filename = Path(f"src/freeze_core/frozen/frozen-{SOABI}.c")
+    filename.parent.mkdir(exist_ok=True)
+    filename = gen_source_file(filename)
+    print(f"{filename} generated!")
+    print(f"{filename.with_suffix('.json')} generated!")
