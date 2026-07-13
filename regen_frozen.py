@@ -14,6 +14,8 @@ import _imp
 import json
 import marshal
 import sys
+from importlib import import_module
+from importlib.machinery import FrozenImporter, PathFinder
 from pathlib import Path
 from sysconfig import get_config_var, get_platform
 from typing import TYPE_CHECKING, cast
@@ -29,19 +31,23 @@ if SOABI is None:
     SOABI = f"{sys.implementation.cache_tag}-{platform_nodot}"
 THIS = Path(__file__)
 
-FROZEN_SOURCE: list[tuple[str, str | None]] = [
+FROZEN_SOURCE: list[tuple[str, list[str] | str | None]] = [
+    # module, filename | search_path | None
     ("__startup__", "src/freeze_core/initscripts/__startup__.py"),
+    ("collections", None),  # and collections.abc in Python < 3.13
+    ("string", None),  # for __startup__
+    # already frozen, some of them partially frozen
     ("abc", None),  # 3.11+
     ("codecs", None),  # 3.11+
-    ("encodings", None),  # 3.15+ partially frozen
-    ("io", None),  # 3.11+
     ("_collections_abc", None),  # 3.11+
+    ("encodings", None),  # 3.15+ partially frozen
     ("genericpath", None),  # 3.11+
+    ("importlib", None),  # only importlib.machinery is frozen
+    ("io", None),  # 3.11+
     ("ntpath", None),  # 3.11+
-    ("posixpath", None),  # 3.11+
     ("os", None),  # 3.11+
+    ("posixpath", None),  # 3.11+
     ("stat", None),  # 3.11+
-    ("string", None),  # for __startup__
 ]
 frozen_module_names = cast(
     "list[str]",
@@ -78,29 +84,38 @@ def gen_symbols(fp: TextIOWrapper) -> list[tuple[str, str, bool]]:
     todo = FROZEN_SOURCE[:]
     while todo:
         name, source = todo.pop()
-        if source is None:
-            try:
-                module = __import__(name)
-            except ImportError:
-                continue
-            if not module.__file__:
-                continue
-            src = Path(module.__file__)
-        else:
+        if isinstance(source, str):
             src = Path(source)
-        if src.stem == "__init__":
-            is_package = True
-            for file in src.parent.iterdir():
-                if file.suffix == ".py" and file.stem != "__init__":
-                    todo.append((f"{name}.{file.stem}", file.as_posix()))
-                elif file.is_dir() and file.name != "__pycache__":
-                    todo.append((f"{name}.{file.stem}", None))
         else:
-            is_package = False
-        if name in frozen_module_names:
-            continue
+            spec = PathFinder.find_spec(name, path=source)
+            if not spec or spec.origin in (None, "buit-in", "frozen"):
+                continue
+            src = Path(spec.origin)
+            if src.stem == "__init__":
+                for file in src.parent.iterdir():
+                    if file.name not in ("__init__.py", "__pycache__") and (
+                        file.suffix == ".py" or file.is_dir()
+                    ):
+                        search_path = spec.submodule_search_locations
+                        todo.append((f"{name}.{file.stem}", search_path))
+            # Check if name is already frozen after processing the directory
+            # because packages may have been partially frozen.
+            spec = FrozenImporter.find_spec(name)
+            if spec:
+                continue
+            # Check if it is frozen using an alias.
+            module = sys.modules.get(name)
+            if module is None:
+                try:
+                    module = import_module(name)
+                except ImportError:
+                    module = None
+            if module is not None:
+                spec = module.__spec__
+                if spec and spec.origin in (None, "buit-in", "frozen"):
+                    continue
         _name, symbol = gen_c_code(name, src, fp)
-        table.append((name, symbol, is_package))
+        table.append((name, symbol, bool(src.stem == "__init__")))
     return table
 
 
@@ -118,7 +133,7 @@ def gen_source_file(filename: Path) -> Path:
         table = gen_symbols(fp)
 
         fp.write("const struct _frozen CoreFrozenModules[] = {\n")
-        for name, symbol, is_package in table:
+        for name, symbol, is_package in sorted(table):
             fp.write(f'    {{"{name}", {symbol}, (int)sizeof({symbol}), ')
             fp.write(f"{1 if is_package else 0}}},\n")
         fp.write("    {0, 0, 0},\n")  # sentinel
@@ -128,8 +143,6 @@ def gen_source_file(filename: Path) -> Path:
     for name in sys.builtin_module_names:
         internal[name] = "built-in"
     for name in frozen_module_names:
-        if name.startswith(("__hello_", "__phello_", "runpy", "site")):
-            continue
         internal[name] = "frozen"
     for name, _symbol, _is_package in sorted(table):
         internal[name] = "core"
