@@ -79,7 +79,7 @@ def init() -> None:
     # enable ExtensionFinder only if uses a zip file
     for path in sys.path:
         if path.endswith(".zip"):
-            sys.meta_path.append(ExtensionFinder)  # ty: ignore[invalid-argument-type]
+            sys.meta_path.append(ExtensionFinder)
             break
 
     if sys.platform.startswith("win"):
