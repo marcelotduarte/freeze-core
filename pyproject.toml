@@ -55,8 +55,8 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 [dependency-groups]
 dev = [
     "cibuildwheel>=4.1.0",
-    "prek>=0.4.9,<0.5.0",
-    "ty>=0.0.59",
+    "prek>=0.4.10,<0.5.0",
+    "ty>=0.0.60",
 ]
 tests = [
     "coverage>=7.13.0",

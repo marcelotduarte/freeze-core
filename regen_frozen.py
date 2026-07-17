@@ -34,6 +34,7 @@ THIS = Path(__file__)
 FROZEN_SOURCE: list[tuple[str, list[str] | str | None]] = [
     # module, filename | search_path | None
     ("__startup__", "src/freeze_core/initscripts/__startup__.py"),
+    ("__future__", None),  # for __startup__
     ("collections", None),  # and collections.abc in Python < 3.13
     ("string", None),  # for __startup__
     # already frozen, some of them partially frozen
@@ -42,7 +43,7 @@ FROZEN_SOURCE: list[tuple[str, list[str] | str | None]] = [
     ("_collections_abc", None),  # 3.11+
     ("encodings", None),  # 3.15+ partially frozen
     ("genericpath", None),  # 3.11+
-    ("importlib", None),  # only importlib.machinery is frozen
+    ("importlib", None),  # 3.11+ partially frozen
     ("io", None),  # 3.11+
     ("ntpath", None),  # 3.11+
     ("os", None),  # 3.11+

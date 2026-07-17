@@ -7,19 +7,12 @@ initialization.
 from __future__ import annotations
 
 import os
-import string
 import sys
 from _frozen_importlib import ModuleSpec
 from _frozen_importlib_external import (
     EXTENSION_SUFFIXES,
     ExtensionFileLoader,
     PathFinder,
-)
-
-import BUILD_CONSTANTS  # ty: ignore[unresolved-import]
-
-STRINGREPLACE = list(
-    string.whitespace + string.punctuation.replace(".", "").replace("_", "")
 )
 
 
@@ -64,8 +57,11 @@ def get_name(executable: str) -> str:
         name, _ = os.path.splitext(name)
     name = name.partition(".")[0]
     if not name.isidentifier():
-        for char in STRINGREPLACE:
-            name = name.replace(char, "_")
+        import string  # noqa: PLC0415
+
+        invalid = string.whitespace + string.punctuation
+        idtable = str.maketrans(invalid, "_" * len(invalid))
+        return name.translate(idtable)
     return name
 
 
@@ -77,44 +73,54 @@ def init() -> None:
         sys.base_prefix = sys.base_exec_prefix = sys.exec_prefix = sys.prefix
 
     # enable ExtensionFinder only if uses a zip file
+    library_zip = None
     for path in sys.path:
         if path.endswith(".zip"):
-            sys.meta_path.append(ExtensionFinder)
+            library_zip = path
             break
+    if library_zip:
+        sys.meta_path.append(ExtensionFinder)
 
-    if sys.platform.startswith("win"):
-        # to avoid bugs, especially in MSYS2, normalize sys.argv and sys.path
-        # (preserving the reference)
-        for j, path in enumerate(sys.path):
-            sys.path[j] = os.path.normpath(path)
-        sys.argv[0] = os.path.normpath(sys.argv[0])
-        # the search path for dependencies
-        search_path: list[str] = [
-            entry for entry in sys.path if os.path.isdir(entry)
-        ]
-        # add to dll search path (or to path)
-        env_path: list[str] = [
-            os.path.normpath(entry) for entry in os.get_exec_path()
-        ]
-        for directory in search_path:
-            try:  # noqa: SIM105
+    _fix_init()
+
+
+def _fix_init() -> None:
+    if not sys.platform.startswith("win"):
+        return
+    import BUILD_CONSTANTS  # noqa: PLC0415 # ty: ignore[unresolved-import]
+
+    # to avoid bugs, especially in MSYS2, normalize sys.argv and sys.path
+    # (preserving the reference)
+    for j, path in enumerate(sys.path):
+        sys.path[j] = os.path.normpath(path)
+    sys.argv[0] = os.path.normpath(sys.argv[0])
+    # the search path for dependencies
+    search_path: list[str] = [
+        entry for entry in sys.path if os.path.isdir(entry)
+    ]
+    # add to dll search path (or to path)
+    env_path: list[str] = [
+        os.path.normpath(entry) for entry in os.get_exec_path()
+    ]
+    for directory in search_path:
+        try:  # noqa: SIM105
+            os.add_dll_directory(directory)
+        except OSError:
+            pass
+        # we need to add to path for packages like 'gi' in MSYS2
+        if directory not in env_path:
+            env_path.insert(0, directory)
+    env_path = [entry.replace(os.sep, "\\") for entry in env_path]
+    os.environ["PATH"] = os.pathsep.join(env_path)
+    # add extra "module.libs"
+    libs_dirs = getattr(BUILD_CONSTANTS, "__LIBS__", None)
+    if libs_dirs:
+        for entry in libs_dirs.split(os.pathsep):
+            directory = os.path.normpath(
+                os.path.join(sys.prefix, "lib", entry)
+            )
+            if os.path.isdir(directory):
                 os.add_dll_directory(directory)
-            except OSError:
-                pass
-            # we need to add to path for packages like 'gi' in MSYS2
-            if directory not in env_path:
-                env_path.insert(0, directory)
-        env_path = [entry.replace(os.sep, "\\") for entry in env_path]
-        os.environ["PATH"] = os.pathsep.join(env_path)
-        # add extra "module.libs"
-        libs_dirs = getattr(BUILD_CONSTANTS, "__LIBS__", None)
-        if libs_dirs:
-            for entry in libs_dirs.split(os.pathsep):
-                directory = os.path.normpath(
-                    os.path.join(sys.prefix, "lib", entry)
-                )
-                if os.path.isdir(directory):
-                    os.add_dll_directory(directory)
 
 
 def run() -> None:
@@ -124,6 +130,8 @@ def run() -> None:
         # basically is __init__ plus the basename of the executable
         module_init = __import__(f"__init__{name}")
     except ModuleNotFoundError:
+        import BUILD_CONSTANTS  # noqa: PLC0415 # ty: ignore[unresolved-import]
+
         # but can be renamed when only one executable exists
         executables = BUILD_CONSTANTS.__EXECUTABLES__.split(os.pathsep)
         num = len(executables)
