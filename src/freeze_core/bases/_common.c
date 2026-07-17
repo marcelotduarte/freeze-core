@@ -4,7 +4,8 @@
 //-----------------------------------------------------------------------------
 
 #define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#include "pythoncapi_compat.h"
+
 #ifdef MS_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -452,7 +453,10 @@ int ExecuteScript(void)
 {
     PyObject *module, *func = NULL, *result = NULL;
 
-    module = PyImport_ImportModule("__startup__");
+    if (PyImport_ImportFrozenModule("__startup__") <= 0)
+        return FatalScriptError();
+
+    module = PyImport_AddModuleRef("__startup__");
     if (!module)
         return FatalScriptError();
 
@@ -463,7 +467,7 @@ int ExecuteScript(void)
         return FatalScriptError();
     }
 
-    result = PyObject_CallObject(func, NULL);
+    result = PyObject_CallNoArgs(func);
     Py_DECREF(func);
     if (!result) {
         Py_DECREF(module);
@@ -477,7 +481,7 @@ int ExecuteScript(void)
     if (!func)
         return FatalScriptError();
 
-    result = PyObject_CallObject(func, NULL);
+    result = PyObject_CallNoArgs(func);
     Py_DECREF(func);
     if (!result)
         return FatalScriptError();
