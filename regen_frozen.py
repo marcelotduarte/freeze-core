@@ -156,8 +156,10 @@ def gen_source_file(filename: Path) -> Path:
 
 
 if __name__ == "__main__":
-    filename = Path(f"src/freeze_core/frozen/frozen-{SOABI}.c")
-    filename.parent.mkdir(exist_ok=True)
+    frozen_dir = Path("src/freeze_core/frozen")
+    frozen_dir.mkdir(exist_ok=True)
+    frozen_dir.joinpath(".gitignore").write_bytes(b"*")
+    filename = frozen_dir / f"frozen-{SOABI}.c"
     filename = gen_source_file(filename)
     print(f"{filename} generated!")
     print(f"{filename.with_suffix('.json')} generated!")
