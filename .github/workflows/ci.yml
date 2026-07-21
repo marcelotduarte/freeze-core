@@ -11,8 +11,15 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   pre_commit:
+    name: Pre commit
+    permissions:
+      contents: write # Required for pre-commit-ci lite
+      id-token: write # Required for pre-commit-ci lite
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -21,6 +28,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2.0.5
         with:
@@ -30,6 +39,7 @@ jobs:
         if: always()
 
   type_check:
+    name: Type check
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     strategy:
       fail-fast: false
@@ -49,8 +59,10 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
         with:
           activate-environment: true
           cache-dependency-glob: "pyproject.toml"
@@ -68,6 +80,9 @@ jobs:
     needs:
       - pre_commit
       - type_check
+    permissions:
+      contents: read
+      id-token: write # Required for nested job 'publish'
 
   testpypi:
     name: Publish package to TestPyPI
@@ -80,7 +95,7 @@ jobs:
       name: ${{ github.event_name }}
       url: https://test.pypi.org/p/freeze-core
     permissions:
-      id-token: write
+      id-token: write # MANDATORY: Required for OIDC Trusted Publishing
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -96,7 +111,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish package to TestPyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           packages-dir: wheelhouse/
           repository-url: https://test.pypi.org/legacy/
@@ -104,6 +119,7 @@ jobs:
           verbose: true
 
   tests:
+    name: Run tests
     needs:
       - build_wheel
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
@@ -133,13 +149,14 @@ jobs:
           sparse-checkout: |
             pyproject.toml
             tests
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
         with:
           activate-environment: true
           cache-dependency-glob: "pyproject.toml"
@@ -152,9 +169,11 @@ jobs:
           pattern: freeze-core-wheel-${{ matrix.os }}*
           path: wheelhouse
 
-      - name: Install dependencies
+      - name: Install dependencies to test
+        run: uv pip install -r pyproject.toml --upgrade --group tests
+
+      - name: Install freeze-core from wheelhouse
         run: |
-          uv pip install -r pyproject.toml --upgrade --group tests
           uv pip install freeze-core -f wheelhouse \
               --no-build --no-deps --no-index --prerelease=allow --reinstall
 
@@ -169,11 +188,12 @@ jobs:
           include-hidden-files: true
 
   coverage:
+    name: Coverage
     needs:
       - tests
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # Required for editing existing comments.
+      pull-requests: write # Required for publishing new comments in pull requests.
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)

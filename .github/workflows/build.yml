@@ -7,6 +7,10 @@ on:
   workflow_call:
   workflow_dispatch:
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -52,7 +56,7 @@ jobs:
                   "tag": "cp3{11,12,13,14,14t}-macosx_universal2",
               },
           ]
-          if "${{ github.event_name }}" != "pull_request":
+          if os.environ["EVENT_NAME"] != "pull_request":
             include += [
                 {
                     "os": "ubuntu",
@@ -95,6 +99,8 @@ jobs:
             print("data="+json.dumps({"include": include}), file=f)
           print("data="+json.dumps({"include": include}))
         shell: python
+        env:
+          EVENT_NAME: ${{ github.event_name }}
 
     outputs:
       data: ${{ steps.includes.outputs.data }}
@@ -122,17 +128,18 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: marcelotduarte/freeze-core
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.14"
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
         with:
           activate-environment: true
           cache-dependency-glob: "pyproject.toml"
-          enable-cache: true
+          enable-cache: false
 
       - name: Set up QEMU
         if: runner.os == 'Linux' && matrix.arch != 'x86_64' && matrix.arch != 'arm64'
@@ -145,7 +152,9 @@ jobs:
         run: ./ci/bump-version.sh build-dev
 
       - name: Build sdist and wheels
-        run: ./ci/build-wheel.sh "${{ matrix.tag }}"
+        run: ./ci/build-wheel.sh "${MATRIX_TAG}"
+        env:
+          MATRIX_TAG: ${{ matrix.tag }}
 
       - name: Upload the artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -163,7 +172,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/freeze-core
     permissions:
-      id-token: write
+      id-token: write # MANDATORY: Required for OIDC Trusted Publishing
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -179,7 +188,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           packages-dir: wheelhouse/
           skip-existing: true
