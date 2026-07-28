@@ -69,10 +69,12 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: ci/install-tools.sh --dev --tests
+        run: ci/install-tools.sh --tests
 
       - name: Type check
-        run: ty check
+        uses: j178/prek-action@e98a699c41eb69ab013a45817a0406469a748f8d # v2.0.5
+        with:
+          extra-args: "--all-files ty"
 
   build_wheel:
     name: Build wheels
