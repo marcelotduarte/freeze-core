@@ -57,7 +57,6 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 dev = [
     "cibuildwheel>=4.1.0",
     "prek>=0.4.10,<0.5.0",
-    "ty>=0.0.63",
 ]
 tests = [
     "coverage>=7.13.0",
@@ -66,9 +65,6 @@ tests = [
     "cabarchive>=0.2.4 ;sys_platform != 'win32'",
     "striprtf>=0.0.26 ;sys_platform != 'win32'",
 ]
-
-[tool.uv.dependency-groups]
-dev = {requires-python = ">=3.11"}
 
 [tool.setuptools]
 include-package-data = true
