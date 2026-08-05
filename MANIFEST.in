@@ -1,4 +1,5 @@
 include Makefile
+include regen_frozen.py
 include requirements.txt
 include requirements-dev.txt
 recursive-include src *.c *.h *.rc python.manifest
