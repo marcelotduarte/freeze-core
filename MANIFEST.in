@@ -3,5 +3,6 @@ include regen_frozen.py
 include requirements.txt
 include requirements-dev.txt
 recursive-include src *.c *.h *.rc python.manifest
-recursive-include src/*/icons *.icns *.ico *.png *.svg
-recursive-include tests *.md *.py *.txt
+graft src/*/icons
+graft tests
+prune src/*/frozen

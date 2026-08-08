@@ -1,7 +1,7 @@
 """Setuptools script for freeze_core.
 
 Use the following commands to install in the development mode:
-    ci/install-tools.sh --dev
+    ci/install-tools.sh --dev --tests
     prek install --install-hooks --overwrite -t pre-commit
     uv pip install -e. --no-build-isolation --no-deps
 """
