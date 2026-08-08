@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools~=83.0",
+    "setuptools~=84.0",
     "cx-logging>=3.2 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
@@ -30,7 +30,6 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "setuptools>=78.1.1,<84.0",
     "filelock>=3.20.3",
     # Windows
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
@@ -57,10 +56,12 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 dev = [
     "cibuildwheel>=4.2.0",
     "prek>=0.4.12,<0.5.0",
+    "setuptools>=78.1.1",
 ]
 tests = [
     "coverage>=7.13.0",
     "pytest>=9.0.3,<9.2.0",
+    "setuptools>=78.1.1",
     # dependencies already included on Windows
     "cabarchive>=0.2.4 ;sys_platform != 'win32'",
     "striprtf>=0.0.26 ;sys_platform != 'win32'",
@@ -81,9 +82,10 @@ build-verbosity = 1
 
 [tool.cibuildwheel.linux]
 archs = "x86_64 aarch64 ppc64le"
-before-build = """
-cd /opt/_internal && tar -xvf static-libs-for-embedding-only.tar.xz
-"""
+before-build = [
+    "cd /opt/_internal",
+    "tar -xvf static-libs-for-embedding-only.tar.xz",
+]
 
 [tool.cibuildwheel.macos]
 archs = "universal2"
@@ -94,7 +96,7 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 [[tool.cibuildwheel.overrides]]
 select = "cp3{14,14t,15,15t}-{win32,win_amd64}"
 before-build = [
-    "uv pip install setuptools~=83.0",
+    "uv pip install setuptools~=84.0",
     "uv pip install --index-url https://test.pypi.org/simple/ cx-logging",
 ]
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
