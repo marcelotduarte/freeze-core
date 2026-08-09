@@ -100,14 +100,16 @@ before-build = [
     "uv pip install --index-url https://test.pypi.org/simple/ cx-logging",
 ]
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
+repair-wheel-command = ""
 
 [[tool.cibuildwheel.overrides]]
 select = "cp3{11,12,13,14,14t,15,15t}-win_arm64"
 before-build = [
-    "uv pip install setuptools~=83.0",
+    "uv pip install setuptools~=84.0",
     "uv pip install --index-url https://test.pypi.org/simple/ cx-logging",
 ]
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
+repair-wheel-command = ""
 
 [tool.coverage.html]
 directory = "build/coverage_html_report"
