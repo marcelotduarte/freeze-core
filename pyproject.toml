@@ -86,6 +86,13 @@ before-build = [
     "cd /opt/_internal",
     "tar -xvf static-libs-for-embedding-only.tar.xz",
 ]
+# cibuildwheel uses `manylinux_2_28` by default, which includes OpenSSL 1.1.1k
+# manylinux2014 includes OpenSSL 3.5.x
+manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:latest"
+manylinux-aarch64-image = "quay.io/pypa/manylinux2014_aarch64:latest"
+manylinux-ppc64le-image = "quay.io/pypa/manylinux2014_ppc64le:latest"
+musllinux-x86_64-image = "quay.io/pypa/musllinux_1_2_x86_64:latest"
+musllinux-aarch64-image = "quay.io/pypa/musllinux_1_2_aarch64:latest"
 
 [tool.cibuildwheel.macos]
 archs = "universal2"
