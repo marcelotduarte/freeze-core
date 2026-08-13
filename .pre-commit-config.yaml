@@ -57,13 +57,8 @@ repos:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: 745eface02aef23e168a8afb6b5737818efbea95 # frozen: v0.11.0.1
-    hooks:
-      - id: shellcheck
-
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: d8494b3a705ddc24569d31316df8fab801c04b77 # frozen: v0.0.70
+    rev: 94e5ef6a17c7b84d9c5a45457a66b2c23a13b532 # frozen: v0.0.71
     hooks:
       - id: ty
         args: [--no-sync]
@@ -81,6 +76,7 @@ repos:
         entry: ci/pythoncapi.sh
         language: system
         files: ^(src/freeze_core/include/pythoncapi_compat.h|src/freeze_core/.*.c)$
+
       - id: requirements
         name: requirements
         language: system
@@ -88,3 +84,9 @@ repos:
         files: ^(pyproject.toml|requirements.txt|requirements-dev.txt|
           tests/requirements.txt
           )$
+
+      - id: lint-shell
+        name: shellcheck
+        entry: shellcheck
+        language: system
+        types: [shell]
