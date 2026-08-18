@@ -48,7 +48,7 @@ tests: wheel
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
 	cp -a wheelhouse $(COV_TMPDIR)/
-	cd $(COV_TMPDIR) && pytest -nauto -v || true
+	cd $(COV_TMPDIR) && pytest -v tests || true
 
 .PHONY: cov
 cov: wheel

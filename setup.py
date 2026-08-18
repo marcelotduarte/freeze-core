@@ -55,7 +55,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             depends=ext.depends,
         )
         filename = Path(self.get_ext_filename(ext.name)).with_suffix("")
-        fullname = os.fspath(Path(self.build_lib, filename))
+        fullname = os.path.join(self.build_lib, os.path.normpath(filename))
         library_dirs = ext.library_dirs or []
         libraries = self.get_libraries(ext)
         extra_args: list[str] = ext.extra_link_args or []
@@ -96,7 +96,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 with contextlib.suppress(ValueError):
                     self.compiler.ldflags_exe.remove("/MANIFEST:EMBED,ID=1")
             elif compiler_type == "mingw32":
-                if ext.name.endswith(("gui", "Win32GUI")):
+                if ext.name.endswith(("gui", "gui_dgpu")):
                     extra_args.append("-mwindows")
                 else:
                     extra_args.append("-mconsole")
@@ -111,14 +111,6 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 extra_args.extend(get_config_var("LIBS").split())
             if get_config_var("LIBM"):
                 extra_args.append(get_config_var("LIBM"))
-            if 0:
-                if get_config_var("BASEMODLIBS"):
-                    extra_args.extend(get_config_var("BASEMODLIBS").split())
-                if get_config_var("LOCALMODLIBS"):
-                    extra_args.extend(get_config_var("LOCALMODLIBS").split())
-                    # fix for Python 3.12 Ubuntu Linux 24.04 (Noble Nimbat)
-                    with contextlib.suppress(ValueError):
-                        extra_args.remove("Modules/_hacl/libHacl_Hash_SHA2.a")
             if IS_MACOS:
                 extra_args.append("-Wl,-export_dynamic")
                 extra_args.append("-Wl,-rpath,@loader_path/lib")
@@ -213,7 +205,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             # LLVM dlltool only supports generating an import library
             check_call(dlltool)  # noqa: S603
             library = name
-        return os.fspath(library_dir), library
+        return os.path.normpath(library_dir), library
 
     def _copy_libraries(self) -> None:
         """Copy standard libraries to freeze_core wheel, on posix systems.
@@ -266,7 +258,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             target_path = f"{freeze_core_dir}/share/{target_name}"
             self.mkpath(target_path)
             for source in source_path.rglob("*"):
-                target = os.fspath(
+                target = os.path.normpath(
                     target_path / source.relative_to(source_path)
                 )
                 if source.is_dir():
