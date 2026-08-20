@@ -31,7 +31,6 @@ TEST_ENABLED = IS_UCRT or (IS_LINUX and sys.version_info[:2] == (3, 12))
         ("16", "win-arm64", False),
         ("17", "win32", False),
         ("17", "win-amd64", True),  # just one no_cache is enough
-        ("17", "win-arm64", False),
         (17, "win-arm64", False),  # one test using int
     ],
 )
