@@ -105,20 +105,25 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             library_dirs.append(get_config_var("LIBPL"))
             if not ENABLE_SHARED or IS_CONDA:
                 library_dirs.append(get_config_var("LIBDIR"))
-            abi_thread = get_config_var("abi_thread") or ""
-            libraries.append(f"python{get_python_version()}{abi_thread}")
+            ldversion = get_config_var("LDVERSION")
+            libraries.append(f"python{ldversion}")
             if get_config_var("LIBS"):
                 extra_args.extend(get_config_var("LIBS").split())
             if get_config_var("LIBM"):
                 extra_args.append(get_config_var("LIBM"))
             if IS_MACOS:
-                extra_args.append("-Wl,-export_dynamic")
-                extra_args.append("-Wl,-rpath,@loader_path/lib")
+                extra_args += [
+                    "-Wl,-export_dynamic",
+                    "-Wl,-rpath,@loader_path/lib",
+                ]
             else:
-                if get_config_var("LINKFORSHARED"):
-                    extra_args.extend(get_config_var("LINKFORSHARED").split())
-                extra_args.append("-Wl,-rpath,$ORIGIN/lib")
-                extra_args.append("-Wl,-rpath,$ORIGIN/../lib")
+                extra_args += [
+                    "-Xlinker",
+                    "-export-dynamic",
+                    "-Wl,-O1",
+                    "-Wl,-rpath,$ORIGIN/lib",
+                    "-Wl,-rpath,$ORIGIN/../lib",
+                ]
                 if not self.debug:
                     extra_args.append("-s")
         link_error = None
