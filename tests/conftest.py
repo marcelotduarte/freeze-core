@@ -13,7 +13,7 @@ import subprocess
 import sys
 import sysconfig
 import tomllib
-from contextlib import redirect_stdout, suppress
+from contextlib import redirect_stdout
 from pathlib import Path
 from shutil import copytree, ignore_patterns, rmtree, which
 from textwrap import dedent
@@ -269,7 +269,6 @@ class TempPackage:
         self,
         packages: str | list[str],
         *,
-        backend: str | None = None,
         binary: bool = True,
         deps: bool = True,
         index: bool | StrPath | None = None,
@@ -282,39 +281,23 @@ class TempPackage:
         if not packages:
             return None
 
-        # check backend values
-        if backend is None:
-            backend = self.backend
-        if backend in ("uv", "pip") and backend != self.backend:
-            # use a different backend only in conda and mingw
-            if self.backend in ("uv", "pip"):
-                backend = self.backend
-            else:
-                # ensure that extra backend (pip or uv) is installed
-                self.install(backend)
-
         with self._lock:
-            # for pip or uv, accept -e, -r # TODO: improve -r
-            if backend in ("uv", "pip") and packages[0].startswith("-"):
-                names_and_specs = packages
-            else:
-                names = []
-                names_and_specs = []
-                for package in packages:
-                    req = Requirement(package)
-                    if req.marker is not None and not req.marker.evaluate():
-                        continue
-                    names.append(req.name)
-                    names_and_specs.append(f"{req.name}{req.specifier!s}")
-                if not names:
-                    return None
-                if backend == "conda":
-                    return self._install_conda(names)
-                if backend == "mingw":
-                    return self._install_mingw(names)
+            names = []
+            names_and_specs = []
+            for package in packages:
+                req = Requirement(package)
+                if req.marker is not None and not req.marker.evaluate():
+                    continue
+                names.append(req.name)
+                names_and_specs.append(f"{req.name}{req.specifier!s}")
+            if not names:
+                return None
+            if self.backend == "conda":
+                return self._install_conda(names_and_specs)
+            if self.backend == "mingw":
+                return self._install_mingw(names)
             return self._install_pip(
                 names_and_specs,
-                backend=backend,
                 binary=binary,
                 deps=deps,
                 index=index,
@@ -330,6 +313,47 @@ class TempPackage:
         project_data = self._get_project(pyproject)
         prerelease = self.request.config.option.venv_prerelease
         self.install(project_data["dependencies"], prerelease=prerelease)
+
+    def install_editable(
+        self,
+        packages: str | list[str],
+        *,
+        deps: bool = True,
+        index: bool | StrPath | None = None,
+        isolated: bool = True,
+        prerelease: bool = True,
+    ) -> pytest.RunResult | None:
+        """Install editable packages for the test."""
+        if isinstance(packages, str):
+            packages = [packages]
+        if not packages:
+            return None
+
+        # check backend values
+        if self.backend == "mingw":
+            backend = "pip"
+            # ensure that 'pip' is installed
+            self.install("pip")
+        else:
+            backend = self.backend
+
+        with self._lock:
+            editables = [f"-e{package}" for package in packages]
+            if not editables:
+                return None
+            if self.backend == "conda":
+                # conda>=26.5 supports conda-pypi
+                # TODO: conda config --append channels conda-pypi
+                return self._install_conda_editable(editables)
+            return self._install_pip(
+                editables,
+                backend=backend,
+                binary=False,
+                deps=deps,
+                index=index,
+                isolated=isolated,
+                prerelease=prerelease,
+            )
 
     def _get_project(self, pyproject: Path | None = None) -> dict[str, Any]:
         """Get project metadata (specified in the pyproject.toml)."""
@@ -351,7 +375,9 @@ class TempPackage:
         """Get installed packages."""
         if python is None:
             python = self.python
-        if self.backend == "uv":
+        if self.backend == "conda":
+            cmd = f"conda list --json -p {self.prefix} -q"
+        elif self.backend == "uv":
             cmd = f"uv pip list --format=json --python={python} -q"
         else:
             cmd = f"{python} -m pip list --format=json"
@@ -368,19 +394,61 @@ class TempPackage:
 
     def _install_conda(self, packages: list[str]) -> pytest.RunResult:
         for i, package in enumerate(packages):
-            with suppress(KeyError):
-                packages[i] = self.map_package_to_conda[package]
+            try:
+                req = Requirement(package)
+            except InvalidRequirement:
+                break
+            if req.marker is not None and not req.marker.evaluate():
+                continue
+            try:
+                conda_name = self.map_package_to_conda[req.name]
+            except KeyError:
+                continue
+            if req.specifier:
+                conda_name = f"{conda_name}{req.specifier!s}"
+            packages[i] = conda_name
+
         packages: str = " ".join(packages)
-        cmd = f"conda install -S -q -y -p {self.prefix}"
-        if not any(
-            opc for opc in ("-c", "--channel", "::") if opc in packages
-        ):
-            cmd = f"{cmd} -c conda-forge"
-        cmd = f"{cmd} {packages}"
+        cmd = f"conda install -p {self.prefix} -q -y -S {packages}"
         result = self.run(cmd, cwd=self.system_path)
         if result.ret > 0:
             raise ModuleNotFoundError(packages) from None
         return result
+
+    def _install_conda_editable(self, packages: list[str]) -> pytest.RunResult:
+        editables = []
+        for package in packages:
+            if package.startswith("-e"):
+                editables.append(package)
+            else:
+                editables.append(f"-e{package}")
+        installed = self._get_installed_packages()
+        try:
+            packages: str = " ".join(packages)
+            cmd = f"conda pypi install -p {self.prefix} -q -y {packages}"
+            result = self.run(cmd, cwd=self.system_path)
+            if result.ret > 0:
+                raise ModuleNotFoundError(packages) from None
+            return result
+        finally:
+            names = [pkg["name"] for pkg in installed]
+            name_to_remove = None
+            for pkg in self._get_installed_packages():
+                name = pkg["name"]
+                if name not in names:
+                    name_to_remove = name
+                    break
+            if name_to_remove:
+
+                def _conda_remove_editable() -> None:
+                    cmd = (
+                        f"conda remove {name_to_remove} -p {self.prefix}"
+                        " -q -y --force --offline"
+                    )
+                    with io.StringIO() as f, redirect_stdout(f):
+                        self.run(cmd, cwd=self.system_path)
+
+                self.request.config.add_cleanup(_conda_remove_editable)
 
     def _install_mingw(self, packages: list[str]) -> pytest.RunResult:
         MINGW_PACKAGE_PREFIX = os.environ["MINGW_PACKAGE_PREFIX"]
@@ -408,6 +476,8 @@ class TempPackage:
         isolated: bool = False,
         prerelease: bool = False,
     ) -> pytest.RunResult:
+        if backend is None:
+            backend = self.backend
         # "uv pip install --prefix" install the package in the new prefix as a
         # fake venv, even if the package already exists in the real venv.
         # With "pip" if the package exists, it will be uninstalled and then
@@ -420,7 +490,7 @@ class TempPackage:
                 try:
                     req = Requirement(package)
                 except InvalidRequirement:
-                    break
+                    continue  # ignore, for example, editable package
                 names.append(normalize(req.name))
             if names:
                 installed = self._get_installed_packages()
@@ -428,8 +498,6 @@ class TempPackage:
                     [pkg["spec"] for pkg in installed if pkg["name"] in names]
                 )
         packages: str = " ".join(packages)
-        if backend is None:
-            backend = self.backend
         if backend == "uv":
             cmd = f"uv pip install --python={self.python} {packages}"
             if binary:
@@ -555,7 +623,6 @@ class TempPackageVenv(TempPackage):
         self,
         packages: str | list[str],
         *,
-        backend: str | None = None,
         binary: bool = True,
         deps: bool = True,
         index: bool | StrPath | None = None,
@@ -570,8 +637,33 @@ class TempPackageVenv(TempPackage):
         try:
             return super().install(
                 packages,
-                backend=backend,
                 binary=binary,
+                deps=deps,
+                index=index,
+                isolated=False,
+                prerelease=prerelease,
+            )
+        finally:
+            self.prefix = self._prefix
+            self.python = self._python
+
+    def install_editable(
+        self,
+        packages: str | list[str],
+        *,
+        deps: bool = True,
+        index: bool | StrPath | None = None,
+        isolated: bool = False,  # noqa: ARG002
+        prerelease: bool = False,
+    ) -> pytest.RunResult | None:
+        # install in the venv prefix
+        if self.venv_prefix:
+            self.prefix = self.venv_prefix
+        if self.venv_python:
+            self.python = self.venv_python
+        try:
+            return super().install_editable(
+                packages,
                 deps=deps,
                 index=index,
                 isolated=False,
@@ -590,9 +682,9 @@ class TempPackageVenv(TempPackage):
             return
         pyproject = self.system_path / "pyproject.toml"
         project_data = self._get_project(pyproject)
-        name = normalize(project_data["name"])
+        project_name = normalize(project_data["name"])
         dependencies = project_data["dependencies"]
-        valid = [name]
+        required = [project_name]
         for package in dependencies:
             try:
                 req = Requirement(package)
@@ -600,33 +692,35 @@ class TempPackageVenv(TempPackage):
                 continue
             if req.marker is not None and not req.marker.evaluate():
                 continue
-            valid.append(normalize(req.name))
+            required.append(normalize(req.name))
 
         # get installed packages in the host environment
-        # compare them with the declared dependencies in pyproject.toml
+        # compare them with the 'required' dependencies from pyproject.toml
         # check for editable packages in development environment
-        # use the wheels in wheelhouse
         packages = []
         editables = []
-        name_in_editables = False
+        project_is_editable = False
         for pkg in self._get_installed_packages():
-            if pkg["name"] in valid:
+            if pkg["name"] in required:
                 try:
                     editables.append(pkg["editable_project_location"])
-                    if pkg["name"] == name:
-                        name_in_editables = True
+                    if pkg["name"] == project_name:
+                        project_is_editable = True
                 except KeyError:
-                    if pkg["name"] != name:
+                    if pkg["name"] != project_name:
                         packages.append(pkg["spec"])
+        # install editable packages, including project_name if editable
         for package in editables:
-            self.install(f"-e{package}", deps=False)
-        if not name_in_editables:
+            self.install_editable(package, deps=False)
+        # or from wheelhouse if non-editable
+        if not project_is_editable:
             self.install(
-                name,
+                project_name,
                 deps=False,
                 index=self.system_path / "wheelhouse",
                 prerelease=True,
             )
+        # install the remaining packages
         self.install(packages)
 
     def lock(self) -> None:
@@ -657,7 +751,9 @@ class TempPackageVenv(TempPackage):
         else:
             # point to the new environment (or reuse an existing one)
             if scope == "function":  # default scope
-                self.venv_prefix = self.path / ".venv"
+                self.venv_prefix = self.path / (
+                    f".{self.backend}" if self.backend == "conda" else ".venv"
+                )
             else:
                 self.venv_prefix = self._root / f".{self.backend}-{self._name}"
                 self.lock()

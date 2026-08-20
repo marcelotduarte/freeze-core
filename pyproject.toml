@@ -163,6 +163,7 @@ filterwarnings = [
     "ignore::DeprecationWarning:pkg_resources.*",
     "ignore::DeprecationWarning:setuptools.*",
 ]
+strict_parametrization_ids = true
 
 [tool.ruff]
 line-length = 79
