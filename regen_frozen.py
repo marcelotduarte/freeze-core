@@ -36,7 +36,12 @@ FROZEN_SOURCE: list[tuple[str, list[str] | str | None]] = [
     ("__startup__", "src/freeze_core/initscripts/__startup__.py"),
     ("__future__", None),  # for __startup__
     ("collections", None),  # and collections.abc in Python < 3.13
+    ("datetime", None),
+    ("email", None),  # for importlib.metadata
     ("string", None),  # for __startup__
+    ("struct", None),
+    ("traceback", None),
+    ("warnings", None),
     # already frozen, some of them partially frozen
     ("abc", None),  # 3.11+
     ("codecs", None),  # 3.11+
