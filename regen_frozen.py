@@ -38,6 +38,7 @@ FROZEN_SOURCE: list[tuple[str, list[str] | str | None]] = [
     ("collections", None),  # and collections.abc in Python < 3.13
     ("datetime", None),
     ("email", None),  # for importlib.metadata
+    ("encodings", None),  # partially frozen only on 3.15rc1
     ("string", None),  # for __startup__
     ("struct", None),
     ("traceback", None),
@@ -46,7 +47,6 @@ FROZEN_SOURCE: list[tuple[str, list[str] | str | None]] = [
     ("abc", None),  # 3.11+
     ("codecs", None),  # 3.11+
     ("_collections_abc", None),  # 3.11+
-    ("encodings", None),  # 3.15+ partially frozen
     ("genericpath", None),  # 3.11+
     ("importlib", None),  # 3.11+ partially frozen
     ("io", None),  # 3.11+
@@ -73,13 +73,13 @@ def gen_c_code(name: str, src: Path, fp: TextIOWrapper) -> tuple[str, str]:
     co_bytes = get_module_code(src)
 
     symbol = f"M_{name.replace('.', '_')}"
-    fp.write(f"static unsigned char {symbol}[] = {{")
+    fp.write(f"static const unsigned char {symbol}[] = {{")
     bytes_per_row = 15
     for i, opcode in enumerate(co_bytes):
         if (i % bytes_per_row) == 0:
             # start a new row
             fp.write("\n    ")
-        fp.write(f"{opcode:d}, ")
+        fp.write(f"0x{opcode:x}, ")
     fp.write("\n};\n\n")
     return name, symbol
 
@@ -95,7 +95,9 @@ def gen_symbols(fp: TextIOWrapper) -> list[tuple[str, str, bool]]:
         else:
             spec = PathFinder.find_spec(name, path=source)
             if not spec or spec.origin in (None, "buit-in", "frozen"):
-                continue
+                continue  # skip
+            # All modules and submodules of a package should be frozen,
+            # i.e., included in todo list.
             src = Path(spec.origin)
             if src.stem == "__init__":
                 for file in src.parent.iterdir():
@@ -104,25 +106,33 @@ def gen_symbols(fp: TextIOWrapper) -> list[tuple[str, str, bool]]:
                     ):
                         search_path = spec.submodule_search_locations
                         todo.append((f"{name}.{file.stem}", search_path))
-            # Check if name is already frozen after processing the directory
-            # because packages may have been partially frozen.
-            spec = FrozenImporter.find_spec(name)
-            if spec:
+            # Skip frozen modules or submodules of partially frozen packages,
+            # except for "encodings" because it is partially frozen in
+            # Python 3.15rc1 and not frozen in 3.15rc2
+            if not name.startswith("encodings") and is_frozen_module(name):
                 continue
-            # Check if it is frozen using an alias.
-            module = sys.modules.get(name)
-            if module is None:
-                try:
-                    module = import_module(name)
-                except ImportError:
-                    module = None
-            if module is not None:
-                spec = module.__spec__
-                if spec and spec.origin in (None, "buit-in", "frozen"):
-                    continue
         _name, symbol = gen_c_code(name, src, fp)
         table.append((name, symbol, bool(src.stem == "__init__")))
     return table
+
+
+def is_frozen_module(name: str) -> bool:
+    """Check if a module is frozen."""
+    spec = FrozenImporter.find_spec(name)
+    if spec:
+        return True
+    # Check if it is frozen using an alias.
+    module = sys.modules.get(name)
+    if module is None:
+        try:
+            module = import_module(name)
+        except ImportError:
+            module = None
+    if module is not None:
+        spec = module.__spec__
+        if spec and spec.origin in (None, "buit-in", "frozen"):
+            return True
+    return False
 
 
 def gen_source_file(filename: Path) -> Path:
@@ -133,17 +143,18 @@ def gen_source_file(filename: Path) -> Path:
     """
     with filename.open("w") as fp:
         fp.write(f"/* Generated with {THIS.name} */\n\n")
-        fp.write("#define PY_SSIZE_T_CLEAN\n")
         fp.write("#include <Python.h>\n\n")
 
         table = gen_symbols(fp)
 
-        fp.write("const struct _frozen CoreFrozenModules[] = {\n")
+        fp.write("static const struct _frozen _CoreFrozenModules[] = {\n")
         for name, symbol, is_package in sorted(table):
-            fp.write(f'    {{"{name}", {symbol}, (int)sizeof({symbol}), ')
-            fp.write(f"{1 if is_package else 0}}},\n")
-        fp.write("    {0, 0, 0},\n")  # sentinel
-        fp.write("};\n")
+            fp.write(f'    {{ "{name}", {symbol}, (int)sizeof({symbol}), ')
+            fp.write(f"{1 if is_package else 0} }},\n")
+        fp.write("    { NULL, NULL, 0, 0 },\n")  # sentinel
+        fp.write("};\n\n")
+        fp.write("Py_EXPORTED_SYMBOL const struct _frozen* ")
+        fp.write("CoreFrozenModules = _CoreFrozenModules;\n")
 
     internal = {"__version__": sys.version}
     for name in sys.builtin_module_names:
@@ -155,7 +166,7 @@ def gen_source_file(filename: Path) -> Path:
 
     filename2 = filename.with_suffix(".json")
     with filename2.open("w") as fp:
-        json.dump(internal, fp, indent=1)
+        json.dump(internal, fp, indent=1, sort_keys=True)
 
     return filename
 
