@@ -3,7 +3,7 @@ SHELL=/bin/bash
 PATH := $(shell python -c "import sysconfig; print(sysconfig.get_path('scripts'))"):$(PATH)
 
 PY_PLATFORM := $(shell python -c "import sysconfig; print(sysconfig.get_platform())")
-PRE_COMMIT_OPTIONS := --show-diff-on-failure --color=always --all-files --hook-stage=manual --no-progress
+PRE_COMMIT_OPTIONS := --show-diff-on-failure --color=always --all-files --hook-stage=manual
 
 COV_TMPDIR := $(shell mktemp -d)
 
