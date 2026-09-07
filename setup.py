@@ -118,8 +118,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 ]
             else:
                 extra_args += [
-                    "-Xlinker",
-                    "-export-dynamic",
+                    "-Wl,-export-dynamic",
                     "-Wl,-O1",
                     "-Wl,-rpath,$ORIGIN/lib",
                     "-Wl,-rpath,$ORIGIN/../lib",

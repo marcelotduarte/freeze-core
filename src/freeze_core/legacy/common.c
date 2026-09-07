@@ -31,7 +31,7 @@ static char* g_argv0;
 #pragma warning(disable : 4996)
 #endif
 
-extern Py_IMPORTED_SYMBOL const struct _frozen* CoreFrozenModules;
+extern const struct _frozen* CoreFrozenModules;
 
 //-----------------------------------------------------------------------------
 // get_executable_name()
