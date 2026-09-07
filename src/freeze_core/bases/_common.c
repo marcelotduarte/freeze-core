@@ -24,7 +24,7 @@
 #endif
 
 extern int FatalScriptError(void);
-extern Py_IMPORTED_SYMBOL const struct _frozen* CoreFrozenModules;
+extern const struct _frozen* CoreFrozenModules;
 
 //-----------------------------------------------------------------------------
 // get_program_name()

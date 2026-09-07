@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from freeze_core._compat import IS_LINUX, IS_UCRT
+from freeze_core._compat import IS_CONDA, IS_LINUX, IS_UCRT
 from freeze_core.winmsvcr import MSVC_FILES, UCRT_FILES
 from freeze_core.winmsvcr_repack import copy_msvcr_files, main_test
 
@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 # This test is really necessary on Windows, but it runs in other environments,
 # so I let it be tested on Python 3.12 Linux, which is used on Ubuntu 24.04.
 
-TEST_ENABLED = IS_UCRT or (IS_LINUX and sys.version_info[:2] == (3, 12))
+TEST_ENABLED = IS_UCRT or (
+    IS_LINUX and sys.version_info[:2] == (3, 12) and not IS_CONDA
+)
 
 
 @pytest.mark.skipif(not TEST_ENABLED, reason="Windows tests")

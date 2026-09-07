@@ -153,7 +153,7 @@ def gen_source_file(filename: Path) -> Path:
             fp.write(f"{1 if is_package else 0} }},\n")
         fp.write("    { NULL, NULL, 0, 0 },\n")  # sentinel
         fp.write("};\n\n")
-        fp.write("Py_EXPORTED_SYMBOL const struct _frozen* ")
+        fp.write("const struct _frozen* ")
         fp.write("CoreFrozenModules = _CoreFrozenModules;\n")
 
     internal = {"__version__": sys.version}
