@@ -20,6 +20,7 @@ jobs:
     steps:
       - name: Block Native CI Skip
         env:
+          GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
@@ -53,7 +54,7 @@ jobs:
             echo ""
             echo "💡 WHAT SHOULD YOU DO?"
             echo "1. Amend your PR title or rebase to fix the commit messages."
-            echo "2. If you need to skip heavy testing to save resources, use our internal tag instead: [skip-tests]"
+            echo "2. If you need to skip heavy testing to save resources, use our internal tag instead: [skip tests]"
             exit 1
           fi
 
