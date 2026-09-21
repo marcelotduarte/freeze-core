@@ -10,8 +10,7 @@ concurrency:
   group: sec-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   check-skip-tags:
@@ -21,6 +20,9 @@ jobs:
       PR_TITLE: ${{ github.event.pull_request.title }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
     runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: write # Required for publishing new comments in pull requests.
     steps:
       - name: Block Native CI Skip
         env:
