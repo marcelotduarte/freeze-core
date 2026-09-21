@@ -16,47 +16,59 @@ permissions:
 jobs:
   check-skip-tags:
     name: Validate Skip Tags
+    env:
+      MSG_FILE: lint-commit-error.log
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
     runs-on: ubuntu-slim
     steps:
       - name: Block Native CI Skip
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         id: message
         run: |
           INVALID_PATTERN='\[(ci skip|skip ci|skip actions|no ci)\]'
           FOUND_BAD_TAG="0"
 
-          echo "🔍 Checking PR title..."
+          echo "🔍 Checking PR title..."> $MSG_FILE
           if echo "$PR_TITLE" | grep -riqE "$INVALID_PATTERN"; then
-            echo "❌ ERROR: Skip tag detected in the PR title!">> $GITHUB_STEP_SUMMARY
+            echo "❌ ERROR: Skip tag detected in the PR title!">> $MSG_FILE
             FOUND_BAD_TAG="1"
           fi
 
-          echo "🔍 Checking all commit messages in the PR..."
+          echo "🔍 Checking all commit messages in the PR...">> $MSG_FILE
           # Fetches messages directly from the GitHub API (No code checkout required)
           COMMIT_MSGS=$(gh api repos/$REPO/pulls/$PR_NUMBER/commits --jq '.[].commit.message')
 
           if echo "$COMMIT_MSGS" | grep -riqE "$INVALID_PATTERN"; then
-            echo "❌ ERROR: Skip tag detected in one of the PR commits!">> $GITHUB_STEP_SUMMARY
-            echo "----------------------------------------">> $GITHUB_STEP_SUMMARY
-            echo "$COMMIT_MSGS" | grep -riE "$INVALID_PATTERN">> $GITHUB_STEP_SUMMARY
-            echo "----------------------------------------">> $GITHUB_STEP_SUMMARY
+            echo "❌ ERROR: Skip tag detected in one of the PR commits!">> $MSG_FILE
+            echo "----------------------------------------">> $MSG_FILE
+            echo "$COMMIT_MSGS" | grep -riE "$INVALID_PATTERN">> $MSG_FILE
+            echo "----------------------------------------">> $MSG_FILE
             FOUND_BAD_TAG="1"
           fi
 
           if [ "$FOUND_BAD_TAG" == "1" ]; then
-            echo "">> $GITHUB_STEP_SUMMARY
-            echo "⚠️ WHY IS THIS AN ISSUE?">> $GITHUB_STEP_SUMMARY
-            echo "Native tags like [ci skip] or [skip ci] bypass GitHub workflows entirely.">> $GITHUB_STEP_SUMMARY
-            echo "This prevents security tools (SAST/CodeQL) from signing the commit, dropping our OpenSSF Scorecard compliance score.">> $GITHUB_STEP_SUMMARY
-            echo "">> $GITHUB_STEP_SUMMARY
-            echo "💡 WHAT SHOULD YOU DO?">> $GITHUB_STEP_SUMMARY
-            echo "1. Amend your PR title or rebase to fix the commit messages.">> $GITHUB_STEP_SUMMARY
-            echo "2. If you need to skip heavy testing to save resources, use our internal tag instead: [skip tests]">> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "">> $MSG_FILE
+            echo "⚠️ WHY IS THIS AN ISSUE?">> $MSG_FILE
+            echo "Native tags like [ci skip] or [skip ci] bypass GitHub workflows entirely.">> $MSG_FILE
+            echo "This prevents security tools (SAST/CodeQL) from signing the commit, dropping our OpenSSF Scorecard compliance score.">> $MSG_FILE
+            echo "">> $MSG_FILE
+            echo "💡 WHAT SHOULD YOU DO?">> $MSG_FILE
+            echo "1. Amend your PR title or rebase to fix the commit messages.">> $MSG_FILE
+            echo "2. If you need to skip heavy testing to save resources, use our internal tag instead: [skip tests]">> $MSG_FILE
+          else
+            echo "✅ No native skip tags found. SAST compliance preserved!">> $MSG_FILE
           fi
+          echo "status=$FOUND_BAD_TAG">> $GITHUB_OUTPUT
 
-          echo "✅ No native skip tags found. SAST compliance preserved!">> $GITHUB_STEP_SUMMARY
+      - name: Comment on PR ${{ env.PR_NUMBER }}
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          path: ${{ env.MSG_FILE }}
+
+      - name: Return status
+        run: exit ${STEPS_MESSAGE_OUTPUTS_STATUS}
+        env:
+          STEPS_MESSAGE_OUTPUTS_STATUS: ${{ steps.message.outputs.status }}
