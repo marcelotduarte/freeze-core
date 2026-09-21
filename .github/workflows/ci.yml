@@ -78,6 +78,9 @@ jobs:
 
   build_wheel:
     name: Build wheels
+    if: |
+      contains(github.event.pull_request.title, '[skip-tests]') == false &&
+      contains(github.event.head_commit.message, '[skip-tests]') == false
     uses: $/.github/workflows/build.yml
     needs:
       - pre_commit

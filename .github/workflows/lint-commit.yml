@@ -1,0 +1,60 @@
+name: Lint Commit Message
+
+on: # zizmor: ignore[dangerous-triggers]
+  # pull_request_target is NEVER ignored by GitHub's [ci skip]
+  # and runs safely because we DO NOT check out the PR code.
+  pull_request_target:
+    types: [opened, edited, synchronize]
+
+concurrency:
+  group: sec-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check-skip-tags:
+    name: Validate Skip Tags
+    runs-on: ubuntu-slim
+    steps:
+      - name: Block Native CI Skip
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          INVALID_PATTERN='\[(ci skip|skip ci|skip actions|no ci)\]'
+          FOUND_BAD_TAG=false
+
+          echo "🔍 Checking PR title..."
+          if echo "$PR_TITLE" | grep -riqE "$INVALID_PATTERN"; then
+            echo "❌ ERROR: Skip tag detected in the PR title!"
+            FOUND_BAD_TAG=true
+          fi
+
+          echo "🔍 Checking all commit messages in the PR..."
+          # Fetches messages directly from the GitHub API (No code checkout required)
+          COMMIT_MSGS=$(gh api repos/$REPO/pulls/$PR_NUMBER/commits --jq '.[].commit.message')
+
+          if echo "$COMMIT_MSGS" | grep -riqE "$INVALID_PATTERN"; then
+            echo "❌ ERROR: Skip tag detected in one of the PR commits!"
+            echo "----------------------------------------"
+            echo "$COMMIT_MSGS" | grep -riE "$INVALID_PATTERN"
+            echo "----------------------------------------"
+            FOUND_BAD_TAG=true
+          fi
+
+          if [ "$FOUND_BAD_TAG" = true ]; then
+            echo ""
+            echo "⚠️ WHY IS THIS AN ISSUE?"
+            echo "Native tags like [ci skip] or [skip ci] bypass GitHub workflows entirely."
+            echo "This prevents security tools (SAST/CodeQL) from signing the commit, dropping our OpenSSF Scorecard compliance score."
+            echo ""
+            echo "💡 WHAT SHOULD YOU DO?"
+            echo "1. Amend your PR title or rebase to fix the commit messages."
+            echo "2. If you need to skip heavy testing to save resources, use our internal tag instead: [skip-tests]"
+            exit 1
+          fi
+
+          echo "✅ No native skip tags found. SAST compliance preserved!"
