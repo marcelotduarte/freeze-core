@@ -81,7 +81,6 @@ jobs:
     if: |
       contains(github.event.pull_request.title, '[skip-tests]') == false &&
       contains(github.event.head_commit.message, '[skip-tests]') == false
-    steps:
     uses: $/.github/workflows/build.yml
     needs:
       - pre_commit
