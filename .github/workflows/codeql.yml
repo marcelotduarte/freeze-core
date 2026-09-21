@@ -22,8 +22,6 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-slim
-    # Runs only for pull_request events or if a status is created on main.
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'status' && github.event.branches[0].name == 'main') }}
     permissions:
       contents: read
       security-events: write # Needed to upload the results to code-scanning dashboard.
