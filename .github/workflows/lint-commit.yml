@@ -32,24 +32,25 @@ jobs:
         run: |
           set -x
           INVALID_PATTERN='\[(ci skip|skip ci|skip actions|no ci)\]'
-          FOUND_BAD_TAG="0"
 
           echo "🔍 Checking PR title..."> $MSG_FILE
-          if echo "$PR_TITLE" | grep -riqE "$INVALID_PATTERN"; then
+          if (echo "$PR_TITLE" | grep -iqE "$INVALID_PATTERN"); then
+            FOUND_BAD_TAG=1
             echo "❌ ERROR: Skip tag detected in the PR title!">> $MSG_FILE
-            FOUND_BAD_TAG="1"
+          else
+            FOUND_BAD_TAG=0
           fi
 
           echo "🔍 Checking all commit messages in the PR...">> $MSG_FILE
           # Fetches messages directly from the GitHub API (No code checkout required)
           COMMIT_MSGS=$(gh api repos/$REPO/pulls/$PR_NUMBER/commits --jq '.[].commit.message')
 
-          if echo "$COMMIT_MSGS" | grep -riqE "$INVALID_PATTERN"; then
+          if (echo "$COMMIT_MSGS" | grep -iqE "$INVALID_PATTERN"); then
+            FOUND_BAD_TAG=1
             echo "❌ ERROR: Skip tag detected in one of the PR commits!">> $MSG_FILE
             echo "----------------------------------------">> $MSG_FILE
             echo "$COMMIT_MSGS">> $MSG_FILE
             echo "----------------------------------------">> $MSG_FILE
-            FOUND_BAD_TAG="1"
           fi
 
           if [ "$FOUND_BAD_TAG" == "1" ]; then
