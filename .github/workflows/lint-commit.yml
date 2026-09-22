@@ -30,6 +30,7 @@ jobs:
           REPO: ${{ github.repository }}
         id: message
         run: |
+          set -x
           INVALID_PATTERN='\[(ci skip|skip ci|skip actions|no ci)\]'
           FOUND_BAD_TAG="0"
 
@@ -46,7 +47,7 @@ jobs:
           if echo "$COMMIT_MSGS" | grep -riqE "$INVALID_PATTERN"; then
             echo "❌ ERROR: Skip tag detected in one of the PR commits!">> $MSG_FILE
             echo "----------------------------------------">> $MSG_FILE
-            echo "$COMMIT_MSGS" | grep -riE "$INVALID_PATTERN">> $MSG_FILE
+            echo "$COMMIT_MSGS">> $MSG_FILE
             echo "----------------------------------------">> $MSG_FILE
             FOUND_BAD_TAG="1"
           fi
