@@ -8,7 +8,10 @@ Produced the following error on Linux:
 
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
+
+import pytest
 
 if TYPE_CHECKING:
     from tests.conftest import TempPackage
@@ -38,6 +41,9 @@ pyproject.toml
 """
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 14), reason="Module of Python 3.14+"
+)
 def test_interpreters(tmp_package: TempPackage) -> None:
     """Test if concurrent.interpreters is correctly imported."""
     tmp_package.create(SOURCE)
