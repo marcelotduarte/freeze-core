@@ -102,22 +102,25 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     extra_args.append("-mconsole")
                 extra_args.append("-municode")
         else:
+            ldversion = get_config_var("LDVERSION")
             library_dirs.append(get_config_var("LIBPL"))
             if not ENABLE_SHARED or IS_CONDA:
                 library_dirs.append(get_config_var("LIBDIR"))
-            ldversion = get_config_var("LDVERSION")
-            libraries.append(f"python{ldversion}")
             if get_config_var("LIBS"):
                 extra_args.extend(get_config_var("LIBS").split())
             if get_config_var("LIBM"):
                 extra_args.append(get_config_var("LIBM"))
             if IS_MACOS:
+                libraries.append(f"python{ldversion}")
                 extra_args += [
                     "-Wl,-export_dynamic",
                     "-Wl,-rpath,@loader_path/lib",
                 ]
             else:
                 extra_args += [
+                    "-Wl,--whole-archive",
+                    f"-lpython{ldversion}",
+                    "-Wl,--no-whole-archive",
                     "-Wl,-export-dynamic",
                     "-Wl,-O1",
                     "-Wl,-rpath,$ORIGIN/lib",

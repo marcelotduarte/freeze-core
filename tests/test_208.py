@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 if TYPE_CHECKING:
     from tests.conftest import TempPackage
 
@@ -30,17 +28,15 @@ pyproject.toml
     executables = ["test_ctypes.py"]
 
     [tool.cxfreeze.build_exe]
+    include-msvcr = true
     excludes = ["tkinter"]
     silent = true
 """
 
 
-@pytest.mark.venv
 def test_ctypes(tmp_package: TempPackage) -> None:
     """Test if ctypes hook is working correctly."""
     tmp_package.create(SOURCE_TEST_CTYPES)
-    # force upgrade of freeze-core
-    tmp_package.install_system_dependencies()  # ty: ignore
     tmp_package.freeze()
     executable = tmp_package.executable("test_ctypes")
     assert executable.is_file()
