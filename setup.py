@@ -147,7 +147,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     debug=self.debug,
                 )
             except LinkError as exc:
-                link_error = exc.args
+                link_error = exc
             else:
                 link_error = None
                 break
