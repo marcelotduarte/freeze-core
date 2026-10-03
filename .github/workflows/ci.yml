@@ -199,9 +199,7 @@ jobs:
           path: wheelhouse
 
       - name: Create environment
-        run: uv venv -p $PYTHON_VERSION
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: uv venv
 
       - name: Install the dependencies for the tests
         run: uv pip install --upgrade -r pyproject.toml --group tests
