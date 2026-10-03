@@ -39,6 +39,12 @@ jobs:
                   "tag": "cp3{11,12,13,14,14t,15,15t}-manylinux_x86_64",
               },
               {
+                  "os": "ubuntu",
+                  "os-version": "latest",
+                  "arch": "x86_64",
+                  "tag": "cp3{11,12,13,14,14t,15,15t}-musllinux_x86_64",
+              },
+              {
                   "os": "windows",
                   "os-version": "latest",
                   "arch": "x86_64",
@@ -53,12 +59,6 @@ jobs:
           ]
           if os.environ["EVENT_NAME"] != "pull_request":
             include += [
-                {
-                    "os": "ubuntu",
-                    "os-version": "latest",
-                    "arch": "x86_64",
-                    "tag": "cp3{11,12,13,14,14t,15,15t}-musllinux_x86_64",
-                },
                 {
                     "os": "ubuntu",
                     "os-version": "24.04-arm",
