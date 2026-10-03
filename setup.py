@@ -133,7 +133,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                 extra_nolto_args.append("-fno-lto")
                 if not self.debug:
                     extra_args.append("-s")
-        link_error = []
+        link_error = None
         for arg in extra_nolto_args:
             try:
                 self.compiler.link_executable(
@@ -147,12 +147,12 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     debug=self.debug,
                 )
             except LinkError as exc:
-                link_error.append(exc.args)
+                link_error = exc.args
             else:
-                link_error = []
+                link_error = None
                 break
-            if link_error:
-                raise LinkError from link_error[0]
+            if link_error is not None:
+                raise LinkError from link_error
 
     def get_ext_filename(self, fullname: str) -> str:
         """Convert the name of an extension into the name of the file.
