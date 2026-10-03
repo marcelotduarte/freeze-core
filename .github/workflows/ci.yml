@@ -198,6 +198,11 @@ jobs:
           pattern: freeze-core-wheel-${{ matrix.os }}-*
           path: wheelhouse
 
+      - name: Create environment
+        run: uv venv -p $PYTHON_VERSION
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+
       - name: Install the dependencies for the tests
         run: uv pip install --upgrade -r pyproject.toml --group tests
 
@@ -220,6 +225,7 @@ jobs:
     name: Coverage
     needs:
       - tests
+      - tests_musl
     permissions:
       contents: write # Required for editing existing comments.
       pull-requests: write # Required for publishing new comments in pull requests.
