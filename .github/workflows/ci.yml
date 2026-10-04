@@ -162,10 +162,68 @@ jobs:
           path: .coverage.*
           include-hidden-files: true
 
+  tests_musl:
+    name: Run tests on musl
+    needs:
+      - build_wheel
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    strategy:
+      matrix:
+        os: [ubuntu]
+        os_version: [latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15-rc"]
+    container:
+      image: # zizmor: ignore[unpinned-images]
+        ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
+    env:
+      UV_NO_PROGRESS: true
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Fetch only the required files for testing
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            pyproject.toml
+            tests
+          persist-credentials: false
+
+      - name: Download the wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          merge-multiple: true
+          pattern: freeze-core-wheel-${{ matrix.os }}-*
+          path: wheelhouse
+
+      - name: Create environment
+        run: uv venv
+
+      - name: Install the dependencies for the tests
+        run: uv pip install --upgrade -r pyproject.toml --group tests
+
+      - name: Install freeze-core from wheelhouse
+        run: |
+          uv pip install freeze-core -f wheelhouse \
+              --no-build --no-deps --no-index --prerelease=allow --reinstall
+
+      - name: Generate coverage report
+        run: uv run --no-project coverage run
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cov-${{ matrix.python-version }}.${{ matrix.os }}-${{ strategy.job-index }}
+          path: .coverage.*
+          include-hidden-files: true
+
   coverage:
     name: Coverage
     needs:
       - tests
+      - tests_musl
     permissions:
       contents: write # Required for editing existing comments.
       pull-requests: write # Required for publishing new comments in pull requests.

@@ -58,7 +58,9 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         fullname = os.path.join(self.build_lib, os.path.normpath(filename))
         library_dirs = ext.library_dirs or []
         libraries = self.get_libraries(ext)
+        extra_preargs: list[str] = []
         extra_args: list[str] = ext.extra_link_args or []
+        extra_nolto_args = [None]
         if PLATFORM.startswith("freebsd"):
             libraries.append("pthread")
         if IS_MINGW or IS_WINDOWS:
@@ -117,19 +119,22 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     "-Wl,-rpath,@loader_path/lib",
                 ]
             else:
-                extra_args += [
+                extra_preargs += [
                     "-Wl,--whole-archive",
                     f"-lpython{ldversion}",
                     "-Wl,--no-whole-archive",
+                ]
+                extra_args += [
                     "-Wl,-export-dynamic",
-                    "-Wl,-O1",
+                    "-Wl,-O2",
                     "-Wl,-rpath,$ORIGIN/lib",
                     "-Wl,-rpath,$ORIGIN/../lib",
                 ]
+                extra_nolto_args.append("-fno-lto")
                 if not self.debug:
                     extra_args.append("-s")
         link_error = None
-        for arg in (None, "-fno-lto", "--no-lto"):
+        for arg in extra_nolto_args:
             try:
                 self.compiler.link_executable(
                     objects,
@@ -137,15 +142,12 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     libraries=libraries,
                     library_dirs=library_dirs,
                     runtime_library_dirs=ext.runtime_library_dirs,
+                    extra_preargs=extra_preargs,
                     extra_postargs=extra_args + ([arg] if arg else []),
                     debug=self.debug,
                 )
             except LinkError as exc:
-                if IS_MINGW or IS_WINDOWS:
-                    raise
-                if arg is None:
-                    link_error = exc.args
-                continue
+                link_error = exc
             else:
                 link_error = None
                 break
