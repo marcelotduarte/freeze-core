@@ -3,7 +3,6 @@
 //   Routines which are common to running frozen executables.
 //-----------------------------------------------------------------------------
 
-#define PY_SSIZE_T_CLEAN
 #include "pythoncapi_compat.h"
 
 #ifdef MS_WINDOWS
@@ -24,7 +23,10 @@
 #endif
 
 extern int FatalScriptError(void);
+
+#ifdef CORE_FROZEN_MODULES
 extern const struct _frozen* CoreFrozenModules;
+#endif
 
 //-----------------------------------------------------------------------------
 // get_program_name()
@@ -275,12 +277,15 @@ static PyStatus PreInitializePython(void)
 {
     PyPreConfig preconfig;
 
+#ifdef CORE_FROZEN_MODULES
     // Load frozen modules
     PyImport_FrozenModules = CoreFrozenModules;
+#endif
 
     // pre config - set utf8 mode
     PyPreConfig_InitIsolatedConfig(&preconfig);
     preconfig.utf8_mode = 1;
+
     // set memory allocator only on Python 3.13
 #ifdef PYMEM_ALLOCATOR_MIMALLOC
     preconfig.allocator = PYMEM_ALLOCATOR_MIMALLOC;
@@ -340,6 +345,9 @@ PyStatus InitializePython(int argc, char** argv)
         PyConfig_InitIsolatedConfig(&config);
         config.site_import = 0;
         config.module_search_paths_set = 1;
+#ifdef CORE_FROZEN_MODULES
+        config.use_frozen_modules = 1;
+#endif
     }
 
     // set argv and use it to calculate program name, executable, prefix, etc
