@@ -130,11 +130,19 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     "-Wl,-rpath,@loader_path/lib",
                 ]
             else:
+                # fix linking on linux (see #244) - using --whole-archive
+                # fix build using linux-musl (see #249) - using preargs
                 if IS_CONDA:
                     libraries.append(f"python{ldversion}")
+                elif ENABLE_SHARED:
+                    # build from sources on ubuntu linux w/ #244 fix
+                    extra_args += [
+                        "-Wl,--whole-archive",
+                        f"-lpython{ldversion}",
+                        "-Wl,--no-whole-archive",
+                    ]
                 else:
-                    # fix linking on linux (see #244) - using --whole-archive
-                    # fix build using linux-musl (see #249) - using preargs
+                    # build on manylinux and musllinux (#244 #249 fixes)
                     extra_preargs += [
                         "-Wl,--whole-archive",
                         f"-lpython{ldversion}",
