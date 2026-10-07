@@ -4,6 +4,11 @@ Use the following commands to install in the development mode:
     ci/install-tools.sh --dev --tests
     prek install --install-hooks --overwrite -t pre-commit
     uv pip install -e. --no-build-isolation --no-deps
+
+Note:
+    Frozen modules can be disabled using:
+        export CORE_FROZEN_MODULES=off
+
 """
 
 from __future__ import annotations
@@ -35,6 +40,8 @@ if SOABI is None:
     platform_nodot = PLATFORM.replace(".", "").replace("-", "_")
     SOABI = f"{sys.implementation.cache_tag}-{platform_nodot}"
 
+CORE_FROZEN_MODULES = os.environ.get("CORE_FROZEN_MODULES", "on") == "on"
+
 
 class BuildBases(setuptools.command.build_ext.build_ext):
     """Build C bases and extension."""
@@ -47,12 +54,16 @@ class BuildBases(setuptools.command.build_ext.build_ext):
             return
         if IS_MINGW or IS_WINDOWS:
             ext.sources.append("src/freeze_core/bases/manifest.rc")
+        extra_compiler_preargs = []
+        if CORE_FROZEN_MODULES:
+            extra_compiler_preargs.append("-DCORE_FROZEN_MODULES")
         objects = self.compiler.compile(
             ext.sources,
             output_dir=self.build_temp,
             include_dirs=ext.include_dirs,
             debug=self.debug,
             depends=ext.depends,
+            extra_preargs=extra_compiler_preargs,
         )
         filename = Path(self.get_ext_filename(ext.name)).with_suffix("")
         fullname = os.path.join(self.build_lib, os.path.normpath(filename))
@@ -60,7 +71,7 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         libraries = self.get_libraries(ext)
         extra_preargs: list[str] = []
         extra_args: list[str] = ext.extra_link_args or []
-        extra_nolto_args = [None]
+        extra_nolto_args: list[str | None] = [None]
         if PLATFORM.startswith("freebsd"):
             libraries.append("pthread")
         if IS_MINGW or IS_WINDOWS:
@@ -119,11 +130,16 @@ class BuildBases(setuptools.command.build_ext.build_ext):
                     "-Wl,-rpath,@loader_path/lib",
                 ]
             else:
-                extra_preargs += [
-                    "-Wl,--whole-archive",
-                    f"-lpython{ldversion}",
-                    "-Wl,--no-whole-archive",
-                ]
+                if IS_CONDA:
+                    libraries.append(f"python{ldversion}")
+                else:
+                    # fix linking on linux (see #244) - using --whole-archive
+                    # fix build using linux-musl (see #249) - using preargs
+                    extra_preargs += [
+                        "-Wl,--whole-archive",
+                        f"-lpython{ldversion}",
+                        "-Wl,--no-whole-archive",
+                    ]
                 extra_args += [
                     "-Wl,-export-dynamic",
                     "-Wl,-O2",
@@ -298,6 +314,8 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         A JSON file containing all built-in and frozen modules is also
         generated.
         """
+        if not CORE_FROZEN_MODULES:
+            return
         cmd = [sys.executable, "regen_frozen.py"]
         check_call(cmd)  # noqa: S603
         if self.inplace:
@@ -323,13 +341,17 @@ class BuildBases(setuptools.command.build_ext.build_ext):
 def get_extensions() -> list[Extension]:
     """Build base executables and util module extension."""
     version = sys.version_info[:2]
+    extra_base_files = ["src/freeze_core/bases/_common.c"]
+    extra_legacy_files = []
+    if CORE_FROZEN_MODULES:
+        extra_base_files.append(f"src/freeze_core/frozen/frozen-{SOABI}.c")
+        extra_legacy_files.append(f"src/freeze_core/frozen/frozen-{SOABI}.c")
     extensions = [
         Extension(
             "freeze_core.bases.console",
             [
                 "src/freeze_core/bases/console.c",
-                "src/freeze_core/bases/_common.c",
-                f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                *extra_base_files,
             ],
         )
     ]
@@ -339,7 +361,7 @@ def get_extensions() -> list[Extension]:
                 "freeze_core.legacy.console",
                 [
                     "src/freeze_core/legacy/console.c",
-                    f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                    *extra_legacy_files,
                 ],
                 depends=["src/freeze_core/legacy/common.c"],
             )
@@ -355,7 +377,7 @@ def get_extensions() -> list[Extension]:
                     "freeze_core.legacy.Win32GUI",
                     [
                         "src/freeze_core/legacy/Win32GUI.c",
-                        f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                        *extra_legacy_files,
                     ],
                     depends=["src/freeze_core/legacy/common.c"],
                     libraries=["user32"],
@@ -364,7 +386,7 @@ def get_extensions() -> list[Extension]:
                     "freeze_core.legacy.Win32Service",
                     [
                         "src/freeze_core/legacy/Win32Service.c",
-                        f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                        *extra_legacy_files,
                     ],
                     depends=["src/freeze_core/legacy/common.c"],
                     extra_link_args=["/DELAYLOAD:cx_Logging"],
@@ -377,8 +399,7 @@ def get_extensions() -> list[Extension]:
                 "freeze_core.bases.gui",
                 [
                     "src/freeze_core/bases/Win32GUI.c",
-                    "src/freeze_core/bases/_common.c",
-                    f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                    *extra_base_files,
                 ],
                 libraries=["user32"],
             ),
@@ -386,8 +407,7 @@ def get_extensions() -> list[Extension]:
                 "freeze_core.bases.gui_dgpu",
                 [
                     "src/freeze_core/bases/Win32GUI_dgpu.c",
-                    "src/freeze_core/bases/_common.c",
-                    f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                    *extra_base_files,
                 ],
                 libraries=["user32"],
             ),
@@ -395,8 +415,7 @@ def get_extensions() -> list[Extension]:
                 "freeze_core.bases.service",
                 [
                     "src/freeze_core/bases/Win32Service.c",
-                    "src/freeze_core/bases/_common.c",
-                    f"src/freeze_core/frozen/frozen-{SOABI}.c",
+                    *extra_base_files,
                 ],
                 extra_link_args=["/DELAYLOAD:cx_Logging"],
                 libraries=["advapi32"],

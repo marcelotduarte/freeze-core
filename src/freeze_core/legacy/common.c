@@ -31,7 +31,9 @@ static char* g_argv0;
 #pragma warning(disable : 4996)
 #endif
 
+#ifdef CORE_FROZEN_MODULES
 extern const struct _frozen* CoreFrozenModules;
+#endif
 
 //-----------------------------------------------------------------------------
 // get_executable_name()
@@ -267,8 +269,10 @@ static int InitializePython(int argc, wchar_t** argv)
 #endif
     wchar_t *wexecutable, *wpath;
 
+#ifdef CORE_FROZEN_MODULES
     // Load frozen modules
     PyImport_FrozenModules = CoreFrozenModules;
+#endif
 
     // determine executable name, lib directory and sys.path
     if ((executable = get_executable_name()) == NULL)

@@ -3,7 +3,6 @@
 //   Main routine for frozen programs written for the Win32 GUI subsystem.
 //-----------------------------------------------------------------------------
 
-#define PY_SSIZE_T_CLEAN
 #include "pythoncapi_compat.h"
 
 #define WIN32_LEAN_AND_MEAN
