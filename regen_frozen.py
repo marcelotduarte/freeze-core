@@ -13,6 +13,7 @@ from __future__ import annotations
 import _imp
 import json
 import marshal
+import os
 import sys
 from importlib import import_module
 from importlib.machinery import FrozenImporter, PathFinder
@@ -23,6 +24,7 @@ from typing import TYPE_CHECKING, cast
 if TYPE_CHECKING:
     from io import TextIOWrapper
 
+CORE_FROZEN_MODULES = os.environ.get("CORE_FROZEN_MODULES", "on") == "on"
 PLATFORM = get_platform()
 SOABI = get_config_var("SOABI")
 if SOABI is None:
@@ -141,28 +143,30 @@ def gen_source_file(filename: Path) -> Path:
     A JSON file containing all built-in and frozen modules is also
     generated.
     """
-    with filename.open("w") as fp:
-        fp.write(f"/* Generated with {THIS.name} */\n\n")
-        fp.write("#include <Python.h>\n\n")
+    if CORE_FROZEN_MODULES:
+        with filename.open("w") as fp:
+            fp.write(f"/* Generated with {THIS.name} */\n\n")
+            fp.write("#include <Python.h>\n\n")
 
-        table = gen_symbols(fp)
+            table = gen_symbols(fp)
 
-        fp.write("static const struct _frozen _CoreFrozenModules[] = {\n")
-        for name, symbol, is_package in sorted(table):
-            fp.write(f'    {{ "{name}", {symbol}, (int)sizeof({symbol}), ')
-            fp.write(f"{1 if is_package else 0} }},\n")
-        fp.write("    { NULL, NULL, 0, 0 },\n")  # sentinel
-        fp.write("};\n\n")
-        fp.write("const struct _frozen* ")
-        fp.write("CoreFrozenModules = _CoreFrozenModules;\n")
+            fp.write("static const struct _frozen _CoreFrozenModules[] = {\n")
+            for name, symbol, is_package in sorted(table):
+                fp.write(f'    {{ "{name}", {symbol}, (int)sizeof({symbol}), ')
+                fp.write(f"{1 if is_package else 0} }},\n")
+            fp.write("    { NULL, NULL, 0, 0 },\n")  # sentinel
+            fp.write("};\n\n")
+            fp.write("const struct _frozen* ")
+            fp.write("CoreFrozenModules = _CoreFrozenModules;\n")
 
     internal = {"__version__": sys.version}
     for name in sys.builtin_module_names:
         internal[name] = "built-in"
     for name in frozen_module_names:
         internal[name] = "frozen"
-    for name, _symbol, _is_package in sorted(table):
-        internal[name] = "core"
+    if CORE_FROZEN_MODULES:
+        for name, _symbol, _is_package in sorted(table):
+            internal[name] = "core"
 
     filename2 = filename.with_suffix(".json")
     with filename2.open("w") as fp:
@@ -177,5 +181,6 @@ if __name__ == "__main__":
     frozen_dir.joinpath(".gitignore").write_bytes(b"*")
     filename = frozen_dir / f"frozen-{SOABI}.c"
     filename = gen_source_file(filename)
-    print(f"{filename} generated!")
+    if CORE_FROZEN_MODULES:
+        print(f"{filename} generated!")
     print(f"{filename.with_suffix('.json')} generated!")

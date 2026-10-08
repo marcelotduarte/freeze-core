@@ -26,6 +26,7 @@ import setuptools.command.build_ext
 from setuptools import Extension, setup
 from setuptools.errors import CompileError, LinkError
 
+CORE_FROZEN_MODULES = os.environ.get("CORE_FROZEN_MODULES", "on") == "on"
 ENABLE_SHARED = bool(get_config_var("Py_ENABLE_SHARED"))
 PLATFORM = get_platform()
 IS_MACOS = PLATFORM.startswith("macos")
@@ -40,8 +41,6 @@ if SOABI is None:
     # Python <= 3.12 on Windows
     platform_nodot = PLATFORM.replace(".", "").replace("-", "_")
     SOABI = f"{sys.implementation.cache_tag}-{platform_nodot}"
-
-CORE_FROZEN_MODULES = os.environ.get("CORE_FROZEN_MODULES", "on") == "on"
 
 
 class BuildBases(setuptools.command.build_ext.build_ext):
@@ -323,8 +322,6 @@ class BuildBases(setuptools.command.build_ext.build_ext):
         A JSON file containing all built-in and frozen modules is also
         generated.
         """
-        if not CORE_FROZEN_MODULES:
-            return
         cmd = [sys.executable, "regen_frozen.py"]
         check_call(cmd)  # noqa: S603
         if self.inplace:
