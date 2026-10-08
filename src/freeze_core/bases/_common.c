@@ -461,10 +461,14 @@ int ExecuteScript(void)
 {
     PyObject *module, *func = NULL, *result = NULL;
 
+#ifdef CORE_FROZEN_MODULES
     if (PyImport_ImportFrozenModule("__startup__") <= 0)
         return FatalScriptError();
 
     module = PyImport_AddModuleRef("__startup__");
+#else
+    module = PyImport_ImportModule("__startup__");
+#endif
     if (!module)
         return FatalScriptError();
 

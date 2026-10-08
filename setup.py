@@ -6,8 +6,9 @@ Use the following commands to install in the development mode:
     uv pip install -e. --no-build-isolation --no-deps
 
 Note:
-    Frozen modules can be disabled using:
+    1) Frozen modules can be disabled using an environment variable:
         export CORE_FROZEN_MODULES=off
+    2) At the moment, it is necessary to use this variable only on conda-forge.
 
 """
 
