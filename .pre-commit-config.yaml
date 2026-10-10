@@ -26,7 +26,7 @@ repos:
           - validate-pyproject-schema-store[all]==2026.10.06
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: f12be1ebaa5351c1fc76472de98db2c3446c8253 # frozen: v0.16.10
+    rev: 44b5042edab9382aba712eed4f9c7bab7a3d6a3e # frozen: v0.17.0
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes", "--unsafe-fixes"]
@@ -37,13 +37,13 @@ repos:
     hooks:
       - id: codespell
         args: ["--ignore-words-list=lief,LIEF", "-w", "--skip=*.rtf"]
+        exclude: (?x)^(src/freeze_core/include/pythoncapi_compat.h)$
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: 98ad4ddb9c057de2f5b9e93e44e6db959807d68c # frozen: v23.1.3
     hooks:
       - id: clang-format
-        exclude: |
-          (?x)^(src/freeze_core/include/pythoncapi_compat.h)$
+        exclude: (?x)^(src/freeze_core/include/pythoncapi_compat.h)$
         types_or: [c, c++]
 
   - repo: https://github.com/gitleaks/gitleaks
@@ -58,7 +58,7 @@ repos:
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: 55b90b9b17c398bf664dd80a913668780e29a812 # frozen: v0.0.85
+    rev: ded8634232ffc633dc66d44f1b0dfe2bdf766542 # frozen: v0.0.86
     hooks:
       - id: ty
         args: [--no-sync]

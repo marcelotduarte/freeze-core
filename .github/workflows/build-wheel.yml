@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-wheel-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -19,11 +19,6 @@ jobs:
     name: Generate matrix of builds
     runs-on: ubuntu-slim
     steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - name: Extra includes
         id: includes
         run: |
@@ -100,8 +95,16 @@ jobs:
     outputs:
       data: ${{ steps.includes.outputs.data }}
 
+  build_sdist:
+    name: Build sdist for freeze-core
+    uses: $/.github/workflows/build-sdist.yml
+    with:
+      dev: ${{ github.event_name != 'release' }}
+
   build_wheel:
-    needs: matrix
+    needs:
+      - build_sdist
+      - matrix
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix.outputs.data) }}
@@ -120,10 +123,18 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download sdist artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          repository: marcelotduarte/freeze-core
-          persist-credentials: false
+          name: freeze-core-sdist
+          path: dist
+
+      - name: Checkout from sdist
+        run: |
+          (cd dist && tar xvf freeze_core-*.tar.gz)
+          mv dist/freeze_core-*/* .
+          rm -rf dist
+          ls -l
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -142,11 +153,7 @@ jobs:
         with:
           platforms: ${{ matrix.arch }}
 
-      - name: Bump new dev version
-        if: github.event_name != 'release'
-        run: ./ci/bump-version.sh build-dev
-
-      - name: Build sdist and wheels
+      - name: Build wheels
         run: ./ci/build-wheel.sh "${MATRIX_TAG}"
         env:
           MATRIX_TAG: ${{ matrix.tag }}
@@ -162,7 +169,8 @@ jobs:
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags')
     name: Publish package to PyPI
-    needs: build_wheel
+    needs:
+      - build_wheel
     environment:
       name: pypi
       url: https://pypi.org/p/freeze-core
@@ -176,7 +184,7 @@ jobs:
           egress-policy: audit
 
       - name: Download all artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: wheelhouse
           pattern: freeze-core-wheel-*
