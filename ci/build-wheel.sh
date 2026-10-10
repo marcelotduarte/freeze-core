@@ -106,7 +106,7 @@ fi
 _get_dirty () {
     local value
     if which git &>/dev/null; then
-        value=$(git status --short -uno | wc -l)
+        value=$(git status --short -uno 2>/dev/null | wc -l)
     else
         value=1
     fi

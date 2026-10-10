@@ -3,7 +3,7 @@
 //   Main routine for frozen programs written for the Win32 GUI subsystem.
 //-----------------------------------------------------------------------------
 
-#include "pythoncapi_compat.h"
+#include <Python.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
