@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -60,7 +60,7 @@ jobs:
       UV_NO_PROGRESS: true
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -110,7 +110,7 @@ jobs:
       UV_NO_PROGRESS: true
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -172,14 +172,11 @@ jobs:
         os: [ubuntu]
         os_version: [latest]
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
-    container:
-      image: # zizmor: ignore[unpinned-images]
-        ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
     env:
       UV_NO_PROGRESS: true
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -198,19 +195,13 @@ jobs:
           pattern: freeze-core-wheel-${{ matrix.os }}-*
           path: wheelhouse
 
-      - name: Create environment
-        run: uv venv
-
-      - name: Install the dependencies for the tests
-        run: uv pip install --upgrade -r pyproject.toml --group tests
-
-      - name: Install freeze-core from wheelhouse
-        run: |
-          uv pip install freeze-core -f wheelhouse \
-              --no-build --no-deps --no-index --prerelease=allow --reinstall
-
-      - name: Generate coverage report
-        run: uv run --no-project coverage run
+      - name: Run tests on docker
+        uses: docker://$IMAGE # zizmor: ignore[unpinned-images]
+        with:
+          entrypoint: /bin/bash
+          args: -c "make cov"
+        env:
+          IMAGE: ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -230,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
