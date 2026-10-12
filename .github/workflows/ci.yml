@@ -196,7 +196,7 @@ jobs:
           path: wheelhouse
 
       - name: Generate coverage report
-        uses: docker://$IMAGE # zizmor: ignore[unpinned-images]
+        uses: docker://${{ env.IMAGE }} # zizmor: ignore[unpinned-images]
         with:
           entrypoint: /bin/bash
           args: -c "make cov"

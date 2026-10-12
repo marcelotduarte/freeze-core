@@ -15,8 +15,8 @@ on:
         type: boolean
 
 concurrency:
-  group: build-sdist-${{ github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  queue: max
 
 permissions:
   contents: read

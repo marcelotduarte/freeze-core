@@ -5,7 +5,7 @@ on:
     types: [created]
 
 concurrency:
-  group: pypi-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
