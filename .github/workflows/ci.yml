@@ -173,6 +173,7 @@ jobs:
         os_version: [latest]
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     env:
+      IMAGE: ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
       UV_NO_PROGRESS: true
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -200,8 +201,6 @@ jobs:
         with:
           entrypoint: /bin/bash
           args: -c "make cov"
-        env:
-          IMAGE: ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
