@@ -196,12 +196,13 @@ jobs:
           path: wheelhouse
 
       - name: Generate coverage report
-        uses: docker://${{ env.IMAGE }} # zizmor: ignore[unpinned-images]
-        with:
-          entrypoint: /bin/bash
-          args: -c "make cov"
         env:
           IMAGE: ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
+        run: |
+          docker run --rm \
+            -v "$PWD":/workspace \
+            -w /workspace \
+            $IMAGE /bin/bash -c "make cov"
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
