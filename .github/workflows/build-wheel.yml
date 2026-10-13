@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: build-wheel-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

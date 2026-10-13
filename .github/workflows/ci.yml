@@ -171,7 +171,7 @@ jobs:
       matrix:
         os: [ubuntu]
         os_version: [latest]
-        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15-rc"]
     env:
       UV_NO_PROGRESS: true
     steps:
@@ -196,12 +196,20 @@ jobs:
           path: wheelhouse
 
       - name: Generate coverage report
-        uses: docker://${{ env.IMAGE }} # zizmor: ignore[unpinned-images]
-        with:
-          entrypoint: /bin/bash
-          args: -c "make cov"
         env:
           IMAGE: ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
+        run: |
+          cat <<EOF >cmd.sh
+          #!/bin/sh
+          uv venv --no-project /tmp/venv
+          source /tmp/venv/bin/activate
+          uv pip install --upgrade -r pyproject.toml --group tests
+          uv pip install freeze-core -f wheelhouse \
+            --no-build --no-deps --no-index --prerelease=allow --reinstall
+          coverage run
+          EOF
+          chmod +x cmd.sh
+          docker run --rm -v "$PWD":/workspace -w /workspace $IMAGE ./cmd.sh
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
