@@ -173,7 +173,6 @@ jobs:
         os_version: [latest]
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     env:
-      IMAGE: ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine
       UV_NO_PROGRESS: true
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -197,7 +196,7 @@ jobs:
           path: wheelhouse
 
       - name: Generate coverage report
-        uses: docker://${{ env.IMAGE }} # zizmor: ignore[unpinned-images]
+        uses: docker://ghcr.io/astral-sh/uv:python${{ matrix.python-version }}-alpine # zizmor: ignore[unpinned-images]
         with:
           entrypoint: /bin/bash
           args: -c "make cov"
