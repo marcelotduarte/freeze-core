@@ -1,3 +1,4 @@
 cibuildwheel>=4.3.1
 prek>=0.5.5,<0.6.0
-setuptools>=78.1.1
+setuptools==84.*
+cx-logging>=3.2 ;sys_platform == 'win32'
