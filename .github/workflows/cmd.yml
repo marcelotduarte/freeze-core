@@ -1,6 +1,6 @@
 name: Command
 
-on:
+on: # zizmor: ignore[dangerous-triggers]
   issue_comment:
     types: [created]
 
