@@ -54,8 +54,8 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 
 [dependency-groups]
 dev = [
-    "cibuildwheel>=4.3.1",
-    "prek>=0.5.5,<0.6.0",
+    "cibuildwheel>=4.3.4",
+    "prek>=0.5.7,<0.6.0",
     # dependencies for build (same as requires)
     "setuptools==84.*",
     "cx-logging>=3.2 ;sys_platform == 'win32'",
