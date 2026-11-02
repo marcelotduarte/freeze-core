@@ -45,6 +45,7 @@ wheel:
 .PHONY: tests
 tests:
 	./ci/install-tools.sh --tests
+	@rm -rf build dist wheelhouse
 	./ci/build-wheel.sh --install
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
@@ -54,8 +55,8 @@ tests:
 .PHONY: cov
 cov:
 	./ci/install-tools.sh --tests
+	@rm -rf build dist wheelhouse
 	./ci/build-wheel.sh --install
-	@rm -rf build/coverage_html_report
 	cp pyproject.toml $(COV_TMPDIR)/
 	cp -a tests/ $(COV_TMPDIR)/
 	cp -a wheelhouse $(COV_TMPDIR)/
