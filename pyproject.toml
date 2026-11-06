@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools~=84.0",
+    "setuptools>=84.0,<85.0",
     "cx-logging>=3.2 ;sys_platform == 'win32'",
 ]
 build-backend = "setuptools.build_meta"
@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "filelock>=3.20.3",
+    "filelock>=4.2.1",
     # Windows
     "cabarchive>=0.2.4 ;sys_platform == 'win32'",
     "striprtf>=0.0.26 ;sys_platform == 'win32'",
@@ -55,9 +55,9 @@ Tracker = "https://github.com/marcelotduarte/cx_Freeze/issues"
 [dependency-groups]
 dev = [
     "cibuildwheel>=4.3.5",
-    "prek>=0.5.9,<0.6.0",
+    "prek>=0.5.10,<0.6.0",
     # dependencies for build (same as requires)
-    "setuptools==84.*",
+    "setuptools>=84.0,<85.0",
     "cx-logging>=3.2 ;sys_platform == 'win32'",
 ]
 tests = [
@@ -105,7 +105,7 @@ delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {whee
 [[tool.cibuildwheel.overrides]]
 select = "cp3{14,14t,15,15t}-{win32,win_amd64}"
 before-build = [
-    "uv pip install setuptools~=84.0",
+    "uv pip install \"setuptools>=84.0,<85.0\"",
     "uv pip install --index-url https://test.pypi.org/simple/ cx-logging",
 ]
 build-frontend = { name = "build[uv]", args = ["--no-isolation"] }

@@ -87,7 +87,7 @@ def init() -> None:
 def _fix_init() -> None:
     if not sys.platform.startswith("win"):
         return
-    import BUILD_CONSTANTS  # noqa: PLC0415 # ty: ignore[unresolved-import]
+    import BUILD_CONSTANTS  # noqa: PLC0415 # ty: ignore[import-not-found]
 
     # to avoid bugs, especially in MSYS2, normalize sys.argv and sys.path
     # (preserving the reference)
@@ -130,7 +130,7 @@ def run() -> None:
         # basically is __init__ plus the basename of the executable
         module_init = __import__(f"__init__{name}")
     except ModuleNotFoundError:
-        import BUILD_CONSTANTS  # noqa: PLC0415 # ty: ignore[unresolved-import]
+        import BUILD_CONSTANTS  # noqa: PLC0415 # ty: ignore[import-not-found]
 
         # but can be renamed when only one executable exists
         executables = BUILD_CONSTANTS.__EXECUTABLES__.split(os.pathsep)
